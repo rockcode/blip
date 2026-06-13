@@ -60,6 +60,15 @@ class TestFrame(unittest.TestCase):
         self.assertLessEqual(len(out), 16)
         self.assertTrue(any("a" in strip(line) for line in out))
 
+    def test_frame_paused_shows_indicator(self):
+        targets = [Target("a", "h")]
+        buffers = {"a": SampleBuffer(10)}
+        buffers["a"].add(10.0)
+        out = render.render_frame(targets, buffers, Thresholds(), 40, 16,
+                                  paused=True)
+        self.assertTrue(any("[paused]" in strip(line) for line in out))
+        self.assertLessEqual(len(out), 16)
+
 
 if __name__ == "__main__":
     unittest.main()

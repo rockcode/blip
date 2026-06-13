@@ -73,11 +73,13 @@ def render_frame(targets, buffers, thresholds, cols, rows, paused=False):
     min_panel = 4
     if rows < min_panel:
         return ["terminal too small"]
-    per = max(min_panel, rows // len(targets))
+    avail = rows - (1 if paused else 0)
+    per = max(min_panel, avail // len(targets))
     lines = []
     for t in targets:
         lines.extend(render_panel(t.name, buffers[t.name],
                                   thresholds, cols, per))
+    lines = lines[:avail]
     if paused:
         lines.append(ansi.colorize("[paused] p 继续 · q 退出", ansi.YELLOW))
     return lines[:rows]
