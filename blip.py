@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""netwave 入口：python3 netwave.py [-c config.toml]"""
+"""blip 入口：python3 blip.py [-c config.toml]"""
 import sys
 
 from app import main

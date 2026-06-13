@@ -26,7 +26,7 @@ class Config:
 
 
 DEFAULT_TOML = """\
-# netwave 配置
+# blip 配置
 interval = 1.0          # 采样间隔(秒)
 timeout  = 2.0          # 建连超时(秒)
 
@@ -80,7 +80,7 @@ def parse_config(data):
 
 def default_config_path():
     base = os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config")
-    return os.path.join(base, "netwave", "config.toml")
+    return os.path.join(base, "blip", "config.toml")
 
 
 def find_config_path(explicit=None):

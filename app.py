@@ -84,7 +84,7 @@ async def run(config, out=None):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(
-        prog="netwave", description="终端 API 延迟电波图")
+        prog="blip", description="终端 API 延迟电波图")
     parser.add_argument("-c", "--config", help="配置文件路径")
     args = parser.parse_args(argv)
 

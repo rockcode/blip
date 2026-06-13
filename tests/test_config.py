@@ -38,7 +38,7 @@ class TestParseConfig(unittest.TestCase):
 class TestLoadConfig(unittest.TestCase):
     def test_ensure_default_creates_file(self):
         with tempfile.TemporaryDirectory() as d:
-            path = os.path.join(d, "netwave", "config.toml")
+            path = os.path.join(d, "blip", "config.toml")
             config.ensure_default(path)
             self.assertTrue(os.path.isfile(path))
             config.ensure_default(path)   # 幂等，不报错
@@ -54,7 +54,7 @@ class TestLoadConfig(unittest.TestCase):
 
     def test_load_explicit_missing_raises(self):
         with self.assertRaises(FileNotFoundError):
-            config.load_config(explicit="/no/such/netwave-config.toml")
+            config.load_config(explicit="/no/such/blip-config.toml")
 
 
 if __name__ == "__main__":
