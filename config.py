@@ -106,7 +106,12 @@ def ensure_default(path):
 
 
 def load_config(explicit=None):
-    """从磁盘加载配置；首次运行生成默认配置。"""
+    """从磁盘加载配置；首次运行生成默认配置。
+
+    若显式指定了 explicit 路径却不存在，直接报错而非静默回退。
+    """
+    if explicit and not os.path.isfile(explicit):
+        raise FileNotFoundError(f"配置文件不存在: {explicit}")
     path = find_config_path(explicit)
     if path is None:
         path = ensure_default(default_config_path())

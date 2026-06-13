@@ -52,6 +52,10 @@ class TestLoadConfig(unittest.TestCase):
             self.assertEqual(c.interval, 5.0)
             self.assertEqual(c.targets[0].name, "a")
 
+    def test_load_explicit_missing_raises(self):
+        with self.assertRaises(FileNotFoundError):
+            config.load_config(explicit="/no/such/netwave-config.toml")
+
 
 if __name__ == "__main__":
     unittest.main()
