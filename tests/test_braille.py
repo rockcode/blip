@@ -34,52 +34,40 @@ class TestCanvas(unittest.TestCase):
 
 
 class TestPlotSeries(unittest.TestCase):
-    def test_miss_fills_full_cell(self):
-        c = braille.Canvas(1, 1)   # 1 字符格 = 2x4 点
+    def test_two_samples_fill_one_char_width(self):
+        # 一个字符宽 = 2 点列 = 容纳 2 次采样(分辨率翻倍)
+        c = braille.Canvas(1, 2)
+        braille.plot_series(c, [800.0, 800.0], scale=800,
+                            color_fn=lambda v: (0, 0, 0),
+                            miss_color=(0, 0, 0), stem_color=(0, 0, 0))
+        self.assertEqual(c.plain_rows(), ["⣿", "⣿"])   # 左右点列都满
+
+    def test_tip_colored_stem_gray(self):
+        # 柱顶按延迟着色、柱身(下影线)为浅灰；彩色顶点在灰影之上
+        TIP, STEM = (1, 2, 3), (9, 9, 9)
+        c = braille.Canvas(1, 3)   # px_h=12
+        braille.plot_series(c, [400.0], scale=800,   # 半高
+                            color_fn=lambda v: TIP,
+                            miss_color=(0, 0, 0), stem_color=STEM)
+        colors = [row[0][1] for row in c.char_rows()]
+        self.assertIn(TIP, colors)    # 有彩色顶点
+        self.assertIn(STEM, colors)   # 有浅灰下影
+        tip_row = colors.index(TIP)
+        stem_rows = [i for i, col in enumerate(colors) if col == STEM]
+        self.assertTrue(all(tip_row <= s for s in stem_rows))  # 顶点不在灰影下方
+
+    def test_miss_fills_its_dot_column(self):
+        c = braille.Canvas(1, 1)   # px_w=2，单个尾采样 -> 右点列
         braille.plot_series(c, [None], scale=100,
                             color_fn=lambda v: (0, 0, 0),
-                            miss_color=(9, 9, 9))
-        # 1 样本占 1 整格：缺失 -> 整格 8 点全填 -> ⣿
-        self.assertEqual(c.plain_rows(), ["⣿"])
-
-    def test_one_color_per_column(self):
-        # 每一列(字符格)只有一种颜色 = 该样本自己的颜色，不串色不渐变。
-        cA, cB = (1, 1, 1), (2, 2, 2)
-        color_fn = lambda v: cA if v < 100 else cB
-        c = braille.Canvas(2, 3)
-        braille.plot_series(c, [50.0, 300.0], scale=400,
-                            color_fn=color_fn, miss_color=(0, 0, 0))
-        rows = c.char_rows()
-        for cx, expect in ((0, cA), (1, cB)):
-            seen = {row[cx][1] for row in rows if row[cx][1] is not None}
-            self.assertEqual(seen, {expect})   # 该列唯一颜色且正确
-
-    def test_bar_fills_from_baseline(self):
-        # 每根柱从底部填到其高度：两柱都到底，低柱不到顶、高柱到顶
-        c = braille.Canvas(2, 4)
-        braille.plot_series(c, [40.0, 760.0], scale=800,
-                            color_fn=lambda v: (1, 1, 1),
-                            miss_color=(0, 0, 0))
-        plain = c.plain_rows()
-        self.assertNotEqual(plain[-1][0], "⠀")   # 低柱也从底部填
-        self.assertNotEqual(plain[-1][1], "⠀")   # 高柱从底部填
-        self.assertEqual(plain[0][0], "⠀")       # 低柱不到顶
-        self.assertNotEqual(plain[0][1], "⠀")    # 高柱到顶
-
-    def test_value_at_scale_fills_whole_column(self):
-        c = braille.Canvas(1, 2)   # px_h=8
-        braille.plot_series(c, [100.0], scale=100,
-                            color_fn=lambda v: (0, 0, 0),
-                            miss_color=(0, 0, 0))
-        rows = c.plain_rows()
-        self.assertNotEqual(rows[0], "⠀")   # 满柱到顶
-        self.assertNotEqual(rows[1], "⠀")   # 柱身填到底
+                            miss_color=(9, 9, 9), stem_color=(5, 5, 5))
+        self.assertEqual(c.plain_rows(), ["⢸"])   # 右点列整列(0xB8)
 
     def test_empty_values_no_error(self):
         c = braille.Canvas(3, 2)
         braille.plot_series(c, [], scale=100,
                             color_fn=lambda v: (0, 0, 0),
-                            miss_color=(0, 0, 0))
+                            miss_color=(0, 0, 0), stem_color=(0, 0, 0))
         self.assertEqual(c.plain_rows(), ["⠀" * 3, "⠀" * 3])
 
 

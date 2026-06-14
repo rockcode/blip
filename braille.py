@@ -44,35 +44,40 @@ class Canvas:
         return ["".join(ch for ch, _ in row) for row in self.char_rows()]
 
 
-def plot_series(canvas, values, scale, color_fn, miss_color):
-    """把最后 width_chars 个样本右对齐画进画布，每个样本画一根从底部填到其
-    高度的实心柱（柱状图），单色 = 该样本的延迟档颜色。
+def plot_series(canvas, values, scale, color_fn, miss_color, stem_color):
+    """把最后 px_w 个样本右对齐画进画布，每个样本占【一个点列】(半个字符宽)，
+    因此一个字符格容纳两次采样、横向分辨率翻倍、柱体更细。
 
-    「同一列只有一种颜色」：整根柱子一个颜色。柱高 = 延迟高低：绿柱矮(快)、
-    红柱高(慢)。柱顶取精确高度(亚字符分辨率)，故微小差异也能看出起伏。
-    一个样本独占一个字符列、颜色恒定，整格左移时历史颜色不抖。缺失样本画整
-    列尖刺(miss_color)。
+    每根柱 = 从基线到柱顶的浅灰「下影线」(stem_color) + 柱顶一个按延迟着色的
+    「彩色顶点」(color_fn)。先画所有灰影、再画所有彩色顶点，使顶点在与相邻样本
+    共用的字符格中盖过灰色。缺失样本画整列(miss_color)。
 
     values:     [float 毫秒 | None]，最旧在前。
     scale:      映射到画布顶部的值（>0）。
-    color_fn:   color_fn(value) -> rgb（按该样本的延迟值取色）。
+    color_fn:   color_fn(value) -> 顶点 rgb（按该样本延迟值取色）。
     miss_color: 缺失样本整列的 rgb。
+    stem_color: 下影线(柱体)的浅灰 rgb。
     """
-    cols = canvas.width_chars
+    pxw = canvas.px_w
     pxh = canvas.px_h
-    vis = values[-cols:] if cols else []
-    offset = cols - len(vis)
-    for i, v in enumerate(vis):
-        cx = offset + i
-        x_left, x_right = cx * 2, cx * 2 + 1
-        if v is None:
-            for y in range(pxh):
-                canvas.set(x_left, y, miss_color)
-                canvas.set(x_right, y, miss_color)
-            continue
+    vis = values[-pxw:] if pxw else []
+    offset = pxw - len(vis)
+
+    def top_y(v):
         frac = 0.0 if scale <= 0 else min(1.0, v / scale)
-        top = (pxh - 1) - round(frac * (pxh - 1))   # 柱顶(精确高度)
-        col = color_fn(v)                            # 单色 = 该样本延迟档色
-        for yy in range(top, pxh):                   # 从柱顶填到底
-            canvas.set(x_left, yy, col)
-            canvas.set(x_right, yy, col)
+        return (pxh - 1) - round(frac * (pxh - 1))
+
+    for i, v in enumerate(vis):          # 第一遍：浅灰下影线(柱顶下方到基线)
+        if v is None:
+            continue
+        x = offset + i
+        for yy in range(top_y(v) + 1, pxh):
+            canvas.set(x, yy, stem_color)
+
+    for i, v in enumerate(vis):          # 第二遍：彩色顶点 / 超时整列(盖过灰色)
+        x = offset + i
+        if v is None:
+            for yy in range(pxh):
+                canvas.set(x, yy, miss_color)
+            continue
+        canvas.set(x, top_y(v), color_fn(v))

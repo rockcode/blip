@@ -56,7 +56,8 @@ def render_panel(name, buffer, thresholds, width, height, scale_max=800.0):
     canvas_w = max(1, width - gutter_w - 1)   # -1 给轴字符
     canvas = braille.Canvas(canvas_w, graph_h)
     braille.plot_series(canvas, values, scale,
-                        lambda v: color_for(v, thresholds), ansi.RED)
+                        lambda v: color_for(v, thresholds),
+                        ansi.RED, ansi.STEM)
 
     top_label = f"{scale:.0f}".rjust(gutter_w)
     for r, row in enumerate(canvas.char_rows()):
