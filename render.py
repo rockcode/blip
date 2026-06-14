@@ -40,8 +40,9 @@ def _render_cell(ch, color):
 def render_panel(name, buffer, thresholds, width, height, scale_max=800.0):
     """返回恰好 `height` 行。布局：表头(1) + 波形(height-2) + 基线(1)。
 
-    纵轴在 scale_max 以内按 max*1.1 自适应；超过 scale_max 则封顶，
-    更大的值在波形上顶到头(饱和)、真实数值仍在表头显示。
+    纵轴固定为 scale_max（所有面板统一、不随各自数据自适应），因此同样的柱高
+    在任何面板都代表同样的延迟，可横向对比。超过 scale_max 的值在波形上顶到头
+    (饱和)，真实数值仍在表头显示。
     """
     height = max(height, 3)
     stats = buffer.stats()
@@ -49,12 +50,7 @@ def render_panel(name, buffer, thresholds, width, height, scale_max=800.0):
     lines = [format_header(name, stats, thresholds, width)]
 
     graph_h = height - 2
-    ok_vals = [v for v in values if v is not None]
-    scale = max(ok_vals) * 1.1 if ok_vals else 1.0
-    if scale <= 0:
-        scale = 1.0
-    if scale > scale_max:
-        scale = scale_max
+    scale = scale_max if scale_max > 0 else 1.0
 
     gutter_w = max(3, len(f"{scale:.0f}"))
     canvas_w = max(1, width - gutter_w - 1)   # -1 给轴字符

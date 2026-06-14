@@ -31,7 +31,7 @@ api.anthropic.com          42ms   avg 48   max 120   loss 0%
     interval  = 1.0         # 采样间隔(秒)
     timeout   = 2.0         # 建连超时(秒)
     mode      = "tls"       # 测量方式: tcp / tls / http
-    scale_max = 800         # 示波器纵轴上限(ms)，超过只显示数值
+    scale_max = 800         # 纵轴固定上限(ms)，所有面板统一以便横向对比
 
     [thresholds]
     bright = 100            # ms 以下: 亮绿(极佳)

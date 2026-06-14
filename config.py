@@ -26,7 +26,7 @@ class Config:
     interval: float = 1.0
     timeout: float = 2.0
     mode: str = "tls"
-    scale_max: float = 800.0   # 示波器纵轴上限(ms)，超过只在表头显示数值
+    scale_max: float = 800.0   # 纵轴固定上限(ms)，所有面板统一以便横向对比
     thresholds: Thresholds = field(default_factory=Thresholds)
     targets: list = field(default_factory=list)
 
@@ -36,7 +36,7 @@ DEFAULT_TOML = """\
 interval  = 1.0         # 采样间隔(秒)
 timeout   = 2.0         # 建连超时(秒)
 mode      = "tls"       # 测量方式: tcp(建连,极快但TUN代理下失真) / tls(握手,推荐) / http(首字节)
-scale_max = 800         # 示波器纵轴上限(ms)，超过只在表头显示数值，以保证波形可读
+scale_max = 800         # 纵轴固定上限(ms)，所有面板统一以便横向对比；超过只在表头显示数值
 
 [thresholds]
 bright = 100            # ms 以下: 亮绿(极佳)
