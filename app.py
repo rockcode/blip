@@ -34,7 +34,8 @@ async def render_loop(config, buffers, state, out):
         cols, rows = _term_size()
         lines = render.render_frame(config.targets, buffers,
                                     config.thresholds, cols, rows,
-                                    paused=state["paused"])
+                                    paused=state["paused"],
+                                    scale_max=config.scale_max)
         frame = ansi.HOME + "\r\n".join(
             line + ansi.CLEAR_LINE for line in lines) + ansi.CLEAR_BELOW
         out.write(frame)

@@ -14,7 +14,12 @@ class TestParseConfig(unittest.TestCase):
         self.assertEqual(c.thresholds.bright, 100.0)
         self.assertEqual(c.thresholds.green, 200.0)
         self.assertEqual(c.thresholds.yellow, 400.0)
+        self.assertEqual(c.scale_max, 800.0)
         self.assertEqual(c.targets, [])
+
+    def test_parse_scale_max(self):
+        self.assertEqual(config.parse_config({"scale_max": 1200}).scale_max,
+                         1200.0)
 
     def test_parses_bright_threshold(self):
         c = config.parse_config(

@@ -26,15 +26,17 @@ class Config:
     interval: float = 1.0
     timeout: float = 2.0
     mode: str = "tls"
+    scale_max: float = 800.0   # 示波器纵轴上限(ms)，超过只在表头显示数值
     thresholds: Thresholds = field(default_factory=Thresholds)
     targets: list = field(default_factory=list)
 
 
 DEFAULT_TOML = """\
 # blip 配置
-interval = 1.0          # 采样间隔(秒)
-timeout  = 2.0          # 建连超时(秒)
-mode     = "tls"        # 测量方式: tcp(建连,极快但TUN代理下失真) / tls(握手,推荐) / http(首字节)
+interval  = 1.0         # 采样间隔(秒)
+timeout   = 2.0         # 建连超时(秒)
+mode      = "tls"       # 测量方式: tcp(建连,极快但TUN代理下失真) / tls(握手,推荐) / http(首字节)
+scale_max = 800         # 示波器纵轴上限(ms)，超过只在表头显示数值，以保证波形可读
 
 [thresholds]
 bright = 100            # ms 以下: 亮绿(极佳)
@@ -85,6 +87,7 @@ def parse_config(data):
         interval=float(data.get("interval", 1.0)),
         timeout=float(data.get("timeout", 2.0)),
         mode=mode,
+        scale_max=float(data.get("scale_max", 800.0)),
         thresholds=thresholds,
         targets=targets,
     )

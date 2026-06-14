@@ -28,9 +28,10 @@ api.anthropic.com          42ms   avg 48   max 120   loss 0%
 
 查找顺序：`-c 指定` → `./config.toml` → `~/.config/blip/config.toml`。
 
-    interval = 1.0          # 采样间隔(秒)
-    timeout  = 2.0          # 建连超时(秒)
-    mode     = "tls"        # 测量方式: tcp / tls / http
+    interval  = 1.0         # 采样间隔(秒)
+    timeout   = 2.0         # 建连超时(秒)
+    mode      = "tls"       # 测量方式: tcp / tls / http
+    scale_max = 800         # 示波器纵轴上限(ms)，超过只显示数值
 
     [thresholds]
     bright = 100            # ms 以下: 亮绿(极佳)

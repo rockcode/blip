@@ -37,8 +37,12 @@ def _render_cell(ch, color):
     return ansi.colorize(ch, color)
 
 
-def render_panel(name, buffer, thresholds, width, height):
-    """返回恰好 `height` 行。布局：表头(1) + 波形(height-2) + 基线(1)。"""
+def render_panel(name, buffer, thresholds, width, height, scale_max=800.0):
+    """返回恰好 `height` 行。布局：表头(1) + 波形(height-2) + 基线(1)。
+
+    纵轴在 scale_max 以内按 max*1.1 自适应；超过 scale_max 则封顶，
+    更大的值在波形上顶到头(饱和)、真实数值仍在表头显示。
+    """
     height = max(height, 3)
     stats = buffer.stats()
     values = buffer.values()
@@ -49,6 +53,8 @@ def render_panel(name, buffer, thresholds, width, height):
     scale = max(ok_vals) * 1.1 if ok_vals else 1.0
     if scale <= 0:
         scale = 1.0
+    if scale > scale_max:
+        scale = scale_max
 
     gutter_w = max(3, len(f"{scale:.0f}"))
     canvas_w = max(1, width - gutter_w - 1)   # -1 给轴字符
@@ -69,7 +75,8 @@ def render_panel(name, buffer, thresholds, width, height):
     return lines[:height]
 
 
-def render_frame(targets, buffers, thresholds, cols, rows, paused=False):
+def render_frame(targets, buffers, thresholds, cols, rows, paused=False,
+                 scale_max=800.0):
     if not targets:
         return ["no targets configured"]
     min_panel = 4
@@ -80,7 +87,7 @@ def render_frame(targets, buffers, thresholds, cols, rows, paused=False):
     lines = []
     for t in targets:
         lines.extend(render_panel(t.name, buffers[t.name],
-                                  thresholds, cols, per))
+                                  thresholds, cols, per, scale_max))
     lines = lines[:avail]
     if paused:
         lines.append(ansi.colorize("[paused] p 继续 · q 退出", ansi.YELLOW))

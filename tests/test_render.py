@@ -52,6 +52,18 @@ class TestPanel(unittest.TestCase):
         panel = render.render_panel("x", b, Thresholds(), 40, 5)
         self.assertIn("┼", strip(panel[-1]))
 
+    def test_scale_capped_at_scale_max(self):
+        # 远超上限的值不应把纵轴撑大；顶轴标签应为 scale_max
+        b = SampleBuffer(120); b.add(2000.0)
+        panel = render.render_panel("x", b, Thresholds(), 40, 6, scale_max=800)
+        self.assertIn("800", strip(panel[1]))   # 第一条波形行的纵轴标签
+
+    def test_scale_autoscales_below_cap(self):
+        # 未达上限时仍按 max*1.1 自适应（100*1.1=110）
+        b = SampleBuffer(120); b.add(100.0)
+        panel = render.render_panel("x", b, Thresholds(), 40, 6, scale_max=800)
+        self.assertIn("110", strip(panel[1]))
+
 
 class TestFrame(unittest.TestCase):
     def test_terminal_too_small(self):
