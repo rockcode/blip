@@ -1,9 +1,10 @@
-"""异步应用：探测调度、渲染循环、输入处理。"""
+"""异步应用：同拍采样调度、渲染、输入处理。"""
 import argparse
 import asyncio
 import os
 import sys
 import termios
+import time
 import tty
 
 import ansi
@@ -13,12 +14,12 @@ from config import load_config
 from probe import measure
 
 
-async def probe_loop(target, buffer, interval, timeout, state, mode="tls"):
-    while True:
-        if not state["paused"]:
-            latency = await measure(target.host, target.port, timeout, mode)
-            buffer.add(latency)
-        await asyncio.sleep(interval)
+async def sample_tick(targets, buffers, timeout, mode):
+    """同一拍并发探测所有目标，给每个缓冲区各追加一个采样（锁步对齐）。"""
+    results = await asyncio.gather(*(
+        measure(t.host, t.port, timeout, mode) for t in targets))
+    for t, r in zip(targets, results):
+        buffers[t.name].add(r)
 
 
 def _term_size():
@@ -29,18 +30,16 @@ def _term_size():
         return 80, 24
 
 
-async def render_loop(config, buffers, state, out):
-    while True:
-        cols, rows = _term_size()
-        lines = render.render_frame(config.targets, buffers,
-                                    config.thresholds, cols, rows,
-                                    paused=state["paused"],
-                                    scale_max=config.scale_max)
-        frame = ansi.HOME + "\r\n".join(
-            line + ansi.CLEAR_LINE for line in lines) + ansi.CLEAR_BELOW
-        out.write(frame)
-        out.flush()
-        await asyncio.sleep(config.interval)
+def _draw(config, buffers, state, out):
+    cols, rows = _term_size()
+    lines = render.render_frame(config.targets, buffers,
+                                config.thresholds, cols, rows,
+                                paused=state["paused"],
+                                scale_max=config.scale_max)
+    frame = ansi.HOME + "\r\n".join(
+        line + ansi.CLEAR_LINE for line in lines) + ansi.CLEAR_BELOW
+    out.write(frame)
+    out.flush()
 
 
 def _handle_key(ch, state, stop):
@@ -50,18 +49,32 @@ def _handle_key(ch, state, stop):
         state["paused"] = not state["paused"]
 
 
+async def tick_loop(config, buffers, state, out, stop):
+    """主循环：每 interval 一拍。同拍并发采样所有目标后统一渲染一帧。
+
+    所有目标在同一拍采样、各缓冲区锁步增长，因此各单元时间轴对齐——同一列
+    在所有面板代表同一时刻，可横向对比不同目标的延迟，且快目标不会滚得更快。
+    睡眠扣除本拍耗时，周期 = max(interval, 本拍最慢测量)。
+    """
+    while not stop.is_set():
+        started = time.monotonic()
+        if not state["paused"]:
+            await sample_tick(config.targets, buffers,
+                              config.timeout, config.mode)
+        _draw(config, buffers, state, out)
+        remaining = config.interval - (time.monotonic() - started)
+        if remaining > 0:
+            try:                       # 可被 stop 提前唤醒，按 q 即时退出
+                await asyncio.wait_for(stop.wait(), timeout=remaining)
+            except asyncio.TimeoutError:
+                pass
+
+
 async def run(config, out=None):
     out = out or sys.stdout
     buffers = {t.name: SampleBuffer(2000) for t in config.targets}
     state = {"paused": False}
     stop = asyncio.Event()
-
-    tasks = [asyncio.create_task(
-        probe_loop(t, buffers[t.name], config.interval,
-                   config.timeout, state, config.mode))
-        for t in config.targets]
-    tasks.append(asyncio.create_task(
-        render_loop(config, buffers, state, out)))
 
     loop = asyncio.get_running_loop()
 
@@ -74,13 +87,10 @@ async def run(config, out=None):
     if have_reader:
         loop.add_reader(sys.stdin.fileno(), on_stdin)
     try:
-        await stop.wait()
+        await tick_loop(config, buffers, state, out, stop)
     finally:
         if have_reader:
             loop.remove_reader(sys.stdin.fileno())
-        for t in tasks:
-            t.cancel()
-        await asyncio.gather(*tasks, return_exceptions=True)
 
 
 def main(argv=None):
