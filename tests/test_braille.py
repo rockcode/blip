@@ -54,26 +54,26 @@ class TestPlotSeries(unittest.TestCase):
             seen = {row[cx][1] for row in rows if row[cx][1] is not None}
             self.assertEqual(seen, {expect})   # 该列唯一颜色且正确
 
-    def test_block_sits_at_sample_height(self):
-        # 低样本的块在底部、高样本的块在顶部（绿低红高的结构基础）
+    def test_bar_fills_from_baseline(self):
+        # 每根柱从底部填到其高度：两柱都到底，低柱不到顶、高柱到顶
         c = braille.Canvas(2, 4)
         braille.plot_series(c, [40.0, 760.0], scale=800,
                             color_fn=lambda v: (1, 1, 1),
                             miss_color=(0, 0, 0))
         plain = c.plain_rows()
-        self.assertNotEqual(plain[-1][0], "⠀")   # 低样本 -> 底行
-        self.assertEqual(plain[0][0], "⠀")       # 低样本不在顶行
-        self.assertNotEqual(plain[0][1], "⠀")    # 高样本 -> 顶行
-        self.assertEqual(plain[-1][1], "⠀")      # 高样本不在底行
+        self.assertNotEqual(plain[-1][0], "⠀")   # 低柱也从底部填
+        self.assertNotEqual(plain[-1][1], "⠀")   # 高柱从底部填
+        self.assertEqual(plain[0][0], "⠀")       # 低柱不到顶
+        self.assertNotEqual(plain[0][1], "⠀")    # 高柱到顶
 
-    def test_value_at_scale_hits_top(self):
+    def test_value_at_scale_fills_whole_column(self):
         c = braille.Canvas(1, 2)   # px_h=8
         braille.plot_series(c, [100.0], scale=100,
                             color_fn=lambda v: (0, 0, 0),
                             miss_color=(0, 0, 0))
         rows = c.plain_rows()
-        self.assertNotEqual(rows[0], "⠀")   # 顶行有点
-        self.assertEqual(rows[1], "⠀")      # 底行空白
+        self.assertNotEqual(rows[0], "⠀")   # 满柱到顶
+        self.assertNotEqual(rows[1], "⠀")   # 柱身填到底
 
     def test_empty_values_no_error(self):
         c = braille.Canvas(3, 2)

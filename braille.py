@@ -45,17 +45,18 @@ class Canvas:
 
 
 def plot_series(canvas, values, scale, color_fn, miss_color):
-    """把最后 width_chars 个样本右对齐画进画布，每个样本占一个字符格。
+    """把最后 width_chars 个样本右对齐画进画布，每个样本画一根从底部填到其
+    高度的实心柱（柱状图），单色 = 该样本的延迟档颜色。
 
-    每个样本在它自己的高度画一个实心块（填满所在字符格），单色 = 该样本的
-    延迟档颜色，不向相邻样本连长线。因此「同一列只有一种颜色」，且颜色与高度
-    一致：绿块永远在低处、红块在高处。相邻样本落差大时块之间会自然断开。
-    一个样本独占一个字符列、颜色恒定，波形整格左移时历史颜色不抖。
+    「同一列只有一种颜色」：整根柱子一个颜色。柱高 = 延迟高低：绿柱矮(快)、
+    红柱高(慢)。柱顶取精确高度(亚字符分辨率)，故微小差异也能看出起伏。
+    一个样本独占一个字符列、颜色恒定，整格左移时历史颜色不抖。缺失样本画整
+    列尖刺(miss_color)。
 
     values:     [float 毫秒 | None]，最旧在前。
     scale:      映射到画布顶部的值（>0）。
     color_fn:   color_fn(value) -> rgb（按该样本的延迟值取色）。
-    miss_color: 缺失样本整列尖刺的 rgb。
+    miss_color: 缺失样本整列的 rgb。
     """
     cols = canvas.width_chars
     pxh = canvas.px_h
@@ -70,10 +71,8 @@ def plot_series(canvas, values, scale, color_fn, miss_color):
                 canvas.set(x_right, y, miss_color)
             continue
         frac = 0.0 if scale <= 0 else min(1.0, v / scale)
-        y = (pxh - 1) - round(frac * (pxh - 1))
-        col = color_fn(v)               # 单色 = 该样本的延迟档颜色
-        cy = y // 4
-        for yy in range(cy * 4, cy * 4 + 4):   # 在该高度填满一个字符格(实心块)
+        top = (pxh - 1) - round(frac * (pxh - 1))   # 柱顶(精确高度)
+        col = color_fn(v)                            # 单色 = 该样本延迟档色
+        for yy in range(top, pxh):                   # 从柱顶填到底
             canvas.set(x_left, yy, col)
             canvas.set(x_right, yy, col)
-        prev_y = y
