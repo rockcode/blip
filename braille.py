@@ -47,31 +47,20 @@ class Canvas:
 def plot_series(canvas, values, scale, color_fn, miss_color):
     """把最后 width_chars 个样本右对齐画进画布，每个样本占一个字符格。
 
-    每个点按它「所在高度对应的延迟档」着色（color_fn 收到该高度代表的延迟
-    值），而非按样本本身的值——颜色因此始终与纵轴高度一致：低处绿、高处红，
-    连线经过哪一档就显哪种色（陡降会呈现红→绿的渐变竖柱），不会出现“快样本
-    的连线整条变绿、顶到天”的误导。一个样本独占一个字符格、颜色随高度恒定，
-    波形整格左移时历史颜色不抖。
+    每个样本在它自己的高度画一个实心块（填满所在字符格），单色 = 该样本的
+    延迟档颜色，不向相邻样本连长线。因此「同一列只有一种颜色」，且颜色与高度
+    一致：绿块永远在低处、红块在高处。相邻样本落差大时块之间会自然断开。
+    一个样本独占一个字符列、颜色恒定，波形整格左移时历史颜色不抖。
 
     values:     [float 毫秒 | None]，最旧在前。
     scale:      映射到画布顶部的值（>0）。
-    color_fn:   color_fn(latency) -> rgb（按“该高度代表的延迟”取色）。
-    miss_color: 缺失样本整格尖刺的 rgb。
+    color_fn:   color_fn(value) -> rgb（按该样本的延迟值取色）。
+    miss_color: 缺失样本整列尖刺的 rgb。
     """
     cols = canvas.width_chars
     pxh = canvas.px_h
-    span = pxh - 1 if pxh > 1 else 1
-
-    def band_color(yy):
-        # 该点所在字符行(高 4 点)中心代表的延迟 -> 取色，保证整格同色
-        center = (yy // 4) * 4 + 1.5
-        frac = (span - center) / span
-        frac = 0.0 if frac < 0 else (1.0 if frac > 1 else frac)
-        return color_fn(frac * scale)
-
     vis = values[-cols:] if cols else []
     offset = cols - len(vis)
-    prev_y = None
     for i, v in enumerate(vis):
         cx = offset + i
         x_left, x_right = cx * 2, cx * 2 + 1
@@ -79,14 +68,12 @@ def plot_series(canvas, values, scale, color_fn, miss_color):
             for y in range(pxh):
                 canvas.set(x_left, y, miss_color)
                 canvas.set(x_right, y, miss_color)
-            prev_y = None
             continue
         frac = 0.0 if scale <= 0 else min(1.0, v / scale)
         y = (pxh - 1) - round(frac * (pxh - 1))
-        lo, hi = (y, y) if prev_y is None else (
-            (prev_y, y) if prev_y <= y else (y, prev_y))
-        for yy in range(lo, hi + 1):    # 画点并向上一样本连线，逐高度分档上色
-            col = band_color(yy)
+        col = color_fn(v)               # 单色 = 该样本的延迟档颜色
+        cy = y // 4
+        for yy in range(cy * 4, cy * 4 + 4):   # 在该高度填满一个字符格(实心块)
             canvas.set(x_left, yy, col)
             canvas.set(x_right, yy, col)
         prev_y = y
