@@ -34,14 +34,25 @@ class TestCanvas(unittest.TestCase):
 
 
 class TestPlotSeries(unittest.TestCase):
-    def test_miss_fills_full_column(self):
-        c = braille.Canvas(1, 1)   # px_w=2, px_h=4
+    def test_miss_fills_full_cell(self):
+        c = braille.Canvas(1, 1)   # 1 字符格 = 2x4 点
         braille.plot_series(c, [None], scale=100,
                             color_fn=lambda v: (0, 0, 0),
                             miss_color=(9, 9, 9))
-        # 仅 1 个样本 -> 最右像素列 x=1（奇数=右点列）整列填满
-        # 右列 bits 0x08|0x10|0x20|0x80 = 0xB8 -> chr(0x28B8) = ⢸
-        self.assertEqual(c.plain_rows(), ["⢸"])
+        # 1 样本占 1 整格：缺失 -> 整格 8 点全填 -> ⣿
+        self.assertEqual(c.plain_rows(), ["⣿"])
+
+    def test_each_cell_colored_by_its_own_sample(self):
+        # 关键回归：每个字符格只由它自己的样本上色，互不串色。
+        # 旧实现把两个样本塞进同一格、后写覆盖，导致历史颜色随滚动乱跳。
+        cA, cB = (1, 1, 1), (2, 2, 2)
+        color_fn = lambda v: cA if v < 100 else cB
+        c = braille.Canvas(2, 1)   # 2 个字符格
+        braille.plot_series(c, [50.0, 150.0], scale=200,
+                            color_fn=color_fn, miss_color=(0, 0, 0))
+        colors = [col for ch, col in c.char_rows()[0]]
+        self.assertEqual(colors[0], cA)   # 样本 50 -> cA
+        self.assertEqual(colors[1], cB)   # 样本 150 -> cB
 
     def test_value_at_scale_hits_top(self):
         c = braille.Canvas(1, 2)   # px_h=8

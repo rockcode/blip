@@ -45,32 +45,38 @@ class Canvas:
 
 
 def plot_series(canvas, values, scale, color_fn, miss_color):
-    """把最后 px_w 个样本右对齐画进画布。
+    """把最后 width_chars 个样本右对齐画进画布，每个样本占一个字符格。
+
+    一个 Braille 字符格只能有一种颜色，故让一个样本独占一格（左右两个点列
+    都画这一个样本），格子颜色 = color_fn(该样本)，恒定不变；波形每帧整格
+    左移，历史样本颜色不会因相邻关系变化而抖动。
 
     values:     [float 毫秒 | None]，最旧在前。
     scale:      映射到画布顶部的值（>0）。
     color_fn:   color_fn(value) -> 成功样本的 rgb。
-    miss_color: 缺失样本整列尖刺的 rgb。
+    miss_color: 缺失样本整格尖刺的 rgb。
     """
-    pxw = canvas.px_w
+    cols = canvas.width_chars
     pxh = canvas.px_h
-    vis = values[-pxw:] if pxw else []
-    offset = pxw - len(vis)
+    vis = values[-cols:] if cols else []
+    offset = cols - len(vis)
     prev_y = None
     for i, v in enumerate(vis):
-        x = offset + i
+        cx = offset + i
+        x_left, x_right = cx * 2, cx * 2 + 1
         if v is None:
             for y in range(pxh):
-                canvas.set(x, y, miss_color)
+                canvas.set(x_left, y, miss_color)
+                canvas.set(x_right, y, miss_color)
             prev_y = None
             continue
         frac = 0.0 if scale <= 0 else min(1.0, v / scale)
         y_from_bottom = round(frac * (pxh - 1))
         y = (pxh - 1) - y_from_bottom
         color = color_fn(v)
-        canvas.set(x, y, color)
-        if prev_y is not None:          # 连成线，避免断点
-            lo, hi = (prev_y, y) if prev_y <= y else (y, prev_y)
-            for yy in range(lo, hi + 1):
-                canvas.set(x, yy, color)
+        lo, hi = (y, y) if prev_y is None else (
+            (prev_y, y) if prev_y <= y else (y, prev_y))
+        for yy in range(lo, hi + 1):    # 画点并向上一样本连线，整格同色
+            canvas.set(x_left, yy, color)
+            canvas.set(x_right, yy, color)
         prev_y = y
