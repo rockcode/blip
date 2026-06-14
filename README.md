@@ -30,21 +30,31 @@ api.anthropic.com          42ms   avg 48   max 120   loss 0%
 
     interval = 1.0          # 采样间隔(秒)
     timeout  = 2.0          # 建连超时(秒)
+    mode     = "tls"        # 测量方式: tcp / tls / http
 
     [thresholds]
-    green  = 100            # ms 以下为绿
-    yellow = 250            # green~yellow 为黄, 以上为红
+    bright = 100            # ms 以下: 亮绿(极佳)
+    green  = 200            # ms 以下: 绿
+    yellow = 400            # ms 以下: 黄, 以上: 红
 
     [[targets]]
     name = "anthropic"
     host = "api.anthropic.com"
     port = 443
 
-颜色：`<green` 绿、`green~yellow` 黄、`>yellow` 红；超时/失败显示红色满格尖刺并计入 loss。
+颜色（四档，越快越亮）：`<bright` 亮绿、`<green` 绿、`<yellow` 黄、`>=yellow` 红；超时/失败显示红色满格尖刺并计入 loss。
+
+## 测量方式（mode）
+
+| mode | 含义 | 适用 |
+|------|------|------|
+| `tcp` | TCP 建连耗时 | 局域网/无代理；**注意：TUN 模式 VPN 会就地应答握手，使该值严重偏低失真** |
+| `tls` | TCP+TLS 握手耗时（默认） | 真实网络 RTT，不需 key、不刷请求、TUN 代理下不失真 |
+| `http` | HTTPS 首字节耗时（发 HEAD） | 最贴近真实体验（含服务端处理），开销稍高 |
 
 ## 工作原理
 
-对每个 `host:443` 做异步 TCP 建连计时（不需要 API key、不产生计费调用、不受 ICMP 屏蔽影响），采样写入环形缓冲，每个目标用一块 Braille 画布画成向左滚动的波形。
+对每个 `host:443` 异步测量延迟（默认 TLS 握手，见上表），不需要 API key、不产生计费调用、不受 ICMP 屏蔽影响；采样写入环形缓冲，每个目标用一块 Braille 画布画成向左滚动的波形。
 
 ## 测试
 

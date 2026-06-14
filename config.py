@@ -6,8 +6,9 @@ from dataclasses import dataclass, field
 
 @dataclass
 class Thresholds:
-    green: float = 100.0
-    yellow: float = 250.0
+    bright: float = 100.0    # <bright: 亮绿(极佳)
+    green: float = 200.0     # <green:  绿
+    yellow: float = 400.0    # <yellow: 黄；>=yellow: 红
 
 
 @dataclass
@@ -17,10 +18,14 @@ class Target:
     port: int = 443
 
 
+VALID_MODES = ("tcp", "tls", "http")
+
+
 @dataclass
 class Config:
     interval: float = 1.0
     timeout: float = 2.0
+    mode: str = "tls"
     thresholds: Thresholds = field(default_factory=Thresholds)
     targets: list = field(default_factory=list)
 
@@ -29,10 +34,12 @@ DEFAULT_TOML = """\
 # blip 配置
 interval = 1.0          # 采样间隔(秒)
 timeout  = 2.0          # 建连超时(秒)
+mode     = "tls"        # 测量方式: tcp(建连,极快但TUN代理下失真) / tls(握手,推荐) / http(首字节)
 
 [thresholds]
-green  = 100            # ms 以下为绿
-yellow = 250            # green~yellow 为黄, 以上为红
+bright = 100            # ms 以下: 亮绿(极佳)
+green  = 200            # ms 以下: 绿
+yellow = 400            # ms 以下: 黄, 以上: 红
 
 [[targets]]
 name = "anthropic"
@@ -60,9 +67,13 @@ def parse_config(data):
     """从已解析的 TOML dict 构建 Config（纯函数）。"""
     th = data.get("thresholds", {})
     thresholds = Thresholds(
-        green=float(th.get("green", 100.0)),
-        yellow=float(th.get("yellow", 250.0)),
+        bright=float(th.get("bright", 100.0)),
+        green=float(th.get("green", 200.0)),
+        yellow=float(th.get("yellow", 400.0)),
     )
+    mode = str(data.get("mode", "tls"))
+    if mode not in VALID_MODES:
+        raise ValueError(f"无效的 mode: {mode!r}，可选 {VALID_MODES}")
     targets = []
     for t in data.get("targets", []):
         targets.append(Target(
@@ -73,6 +84,7 @@ def parse_config(data):
     return Config(
         interval=float(data.get("interval", 1.0)),
         timeout=float(data.get("timeout", 2.0)),
+        mode=mode,
         thresholds=thresholds,
         targets=targets,
     )

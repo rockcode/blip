@@ -13,12 +13,20 @@ def strip(s):
 
 
 class TestColorFor(unittest.TestCase):
-    def test_thresholds(self):
-        th = Thresholds(green=100, yellow=250)
-        self.assertEqual(render.color_for(50, th), render.ansi.GREEN)
-        self.assertEqual(render.color_for(150, th), render.ansi.YELLOW)
-        self.assertEqual(render.color_for(300, th), render.ansi.RED)
+    def test_four_tiers(self):
+        th = Thresholds(bright=100, green=200, yellow=400)
+        self.assertEqual(render.color_for(50, th), render.ansi.BRIGHT_GREEN)
+        self.assertEqual(render.color_for(150, th), render.ansi.GREEN)
+        self.assertEqual(render.color_for(300, th), render.ansi.YELLOW)
+        self.assertEqual(render.color_for(500, th), render.ansi.RED)
         self.assertEqual(render.color_for(None, th), render.ansi.RED)
+
+    def test_boundaries_are_strict_less_than(self):
+        th = Thresholds(bright=100, green=200, yellow=400)
+        # 恰好等于阈值归入更慢的一档
+        self.assertEqual(render.color_for(100, th), render.ansi.GREEN)
+        self.assertEqual(render.color_for(200, th), render.ansi.YELLOW)
+        self.assertEqual(render.color_for(400, th), render.ansi.RED)
 
 
 class TestHeader(unittest.TestCase):

@@ -10,13 +10,13 @@ import ansi
 import render
 from buffer import SampleBuffer
 from config import load_config
-from probe import probe_tcp
+from probe import measure
 
 
-async def probe_loop(target, buffer, interval, timeout, state):
+async def probe_loop(target, buffer, interval, timeout, state, mode="tls"):
     while True:
         if not state["paused"]:
-            latency = await probe_tcp(target.host, target.port, timeout)
+            latency = await measure(target.host, target.port, timeout, mode)
             buffer.add(latency)
         await asyncio.sleep(interval)
 
@@ -57,7 +57,7 @@ async def run(config, out=None):
 
     tasks = [asyncio.create_task(
         probe_loop(t, buffers[t.name], config.interval,
-                   config.timeout, state))
+                   config.timeout, state, config.mode))
         for t in config.targets]
     tasks.append(asyncio.create_task(
         render_loop(config, buffers, state, out)))

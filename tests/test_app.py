@@ -44,11 +44,11 @@ class TestProbeLoop(unittest.IsolatedAsyncioTestCase):
         async with server:
             task = asyncio.create_task(
                 app.probe_loop(target, buf, interval=0.01,
-                               timeout=1.0, state=state))
+                               timeout=1.0, state=state, mode="tcp"))
             await asyncio.sleep(0.05)
             task.cancel()
             await asyncio.gather(task, return_exceptions=True)
-        self.assertGreaterEqual(len(buf.values()), 1)
+        self.assertTrue(any(v is not None for v in buf.values()))
 
     async def test_paused_skips_probing(self):
         class T:

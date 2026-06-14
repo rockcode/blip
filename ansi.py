@@ -11,7 +11,8 @@ CLEAR_LINE = f"{ESC}[K"
 HOME = f"{ESC}[H"
 
 # 调色板 (r, g, b)
-GREEN = (80, 220, 120)
+BRIGHT_GREEN = (150, 255, 150)   # 极佳(<bright)：更亮的绿
+GREEN = (50, 190, 100)           # 良好：偏深的绿，与亮绿形成程度差
 YELLOW = (230, 200, 60)
 RED = (235, 80, 80)
 GRAY = (150, 150, 150)

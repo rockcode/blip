@@ -15,7 +15,7 @@ class TestAnsi(unittest.TestCase):
         self.assertEqual(ansi.move(3, 5), "\x1b[3;5H")
 
     def test_palette_present(self):
-        for name in ("GREEN", "YELLOW", "RED", "GRAY", "DIM"):
+        for name in ("BRIGHT_GREEN", "GREEN", "YELLOW", "RED", "GRAY", "DIM"):
             rgb = getattr(ansi, name)
             self.assertEqual(len(rgb), 3)
 

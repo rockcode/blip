@@ -6,6 +6,8 @@ import braille
 def color_for(latency, thresholds):
     if latency is None:
         return ansi.RED
+    if latency < thresholds.bright:
+        return ansi.BRIGHT_GREEN
     if latency < thresholds.green:
         return ansi.GREEN
     if latency < thresholds.yellow:

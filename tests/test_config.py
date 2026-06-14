@@ -11,9 +11,17 @@ class TestParseConfig(unittest.TestCase):
         c = config.parse_config({})
         self.assertEqual(c.interval, 1.0)
         self.assertEqual(c.timeout, 2.0)
-        self.assertEqual(c.thresholds.green, 100.0)
-        self.assertEqual(c.thresholds.yellow, 250.0)
+        self.assertEqual(c.thresholds.bright, 100.0)
+        self.assertEqual(c.thresholds.green, 200.0)
+        self.assertEqual(c.thresholds.yellow, 400.0)
         self.assertEqual(c.targets, [])
+
+    def test_parses_bright_threshold(self):
+        c = config.parse_config(
+            {"thresholds": {"bright": 60, "green": 120, "yellow": 300}})
+        self.assertEqual(c.thresholds.bright, 60.0)
+        self.assertEqual(c.thresholds.green, 120.0)
+        self.assertEqual(c.thresholds.yellow, 300.0)
 
     def test_parses_targets_and_thresholds(self):
         data = {
@@ -33,6 +41,18 @@ class TestParseConfig(unittest.TestCase):
         data = tomllib.loads(config.DEFAULT_TOML)
         c = config.parse_config(data)
         self.assertGreater(len(c.targets), 0)
+        self.assertIn(c.mode, ("tcp", "tls", "http"))
+
+    def test_default_mode_is_tls(self):
+        self.assertEqual(config.parse_config({}).mode, "tls")
+
+    def test_parse_explicit_mode(self):
+        self.assertEqual(config.parse_config({"mode": "http"}).mode, "http")
+        self.assertEqual(config.parse_config({"mode": "tcp"}).mode, "tcp")
+
+    def test_invalid_mode_raises(self):
+        with self.assertRaises(ValueError):
+            config.parse_config({"mode": "icmp"})
 
 
 class TestLoadConfig(unittest.TestCase):
