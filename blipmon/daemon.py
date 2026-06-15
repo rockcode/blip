@@ -4,6 +4,7 @@ statusline 脚本会在无守护进程时静默拉起它；它检测心跳文件
 没人读(Claude Code 已关)就自退，不留僵尸进程。
 """
 import asyncio
+import errno
 import os
 import subprocess
 import sys
@@ -17,8 +18,8 @@ from .buffer import SampleBuffer
 def _pid_alive(pid):
     try:
         os.kill(pid, 0)
-    except OSError:
-        return False
+    except OSError as e:
+        return e.errno == errno.EPERM   # EPERM=存在但非本用户；ESRCH=已消失
     return True
 
 

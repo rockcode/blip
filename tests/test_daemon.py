@@ -14,7 +14,7 @@ class TestLock(unittest.TestCase):
     def test_stale_pid_can_be_reacquired(self):
         p = os.path.join(tempfile.mkdtemp(), "daemon.lock")
         with open(p, "w") as f:
-            f.write("424242")                        # 假定不存活的 pid
+            f.write("424242")                        # pid 值不重要：alive 已注入为 False
         self.assertTrue(daemon.acquire_lock(p, alive=lambda pid: False))
 
 
