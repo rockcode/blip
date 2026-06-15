@@ -5,7 +5,7 @@
 [![Claude Code plugin](https://img.shields.io/badge/Claude_Code-plugin_·_status--line_HUD-da7756)](#claude-code-status-line-hud)
 [![Download blip.pyz](https://img.shields.io/badge/download-blip.pyz-2ea44f?logo=python&logoColor=white)](https://github.com/rockcode/blip/releases/latest/download/blip.pyz)
 [![Latest release](https://img.shields.io/github/v/release/rockcode/blip?color=2ea44f&label=release)](https://github.com/rockcode/blip/releases/latest)
-[![license](https://img.shields.io/github/license/rockcode/blip?color=2ea44f)](LICENSE)
+[![license](https://img.shields.io/badge/license-MIT-2ea44f)](LICENSE)
 
 A network-latency "oscilloscope" for your terminal — watch the connection latency from your machine to multiple LLM APIs render as live Braille waveforms (TLS handshake by default; TCP connect / HTTP first-byte optional), with real-time up/down throughput in each header (macOS). **It also ships a Claude Code plugin** — living in the status line as a one-line HUD ([see below](#claude-code-status-line-hud)). Pure Python standard library, zero dependencies.
 
