@@ -44,18 +44,17 @@ class Canvas:
         return ["".join(ch for ch, _ in row) for row in self.char_rows()]
 
 
-def plot_series(canvas, values, scale, color_fn, miss_color, stem_color):
-    """把最后 width_chars 个样本右对齐画进画布，每个样本独占一个字符列。
+def plot_series(canvas, values, scale, color_fn, miss_color):
+    """把最后 width_chars 个样本右对齐画进画布，每个样本独占一个字符列，画一根
+    从基线填到柱顶的实心柱，整列单色 = 该样本的延迟档颜色。
 
-    每根柱 = 从基线到柱顶的浅灰柱身(stem_color) + 柱顶所在那一个字符格按延迟
-    着色(color_fn)。一个样本独占整列，颜色不依赖相邻样本、不随滚动闪变；着色
-    的最小单位是一个字符格(终端限制)。缺失样本画整列(miss_color)。
+    一个样本独占整列，颜色只由自己决定、不依赖相邻样本、不随滚动闪变。缺失样本
+    画整列(miss_color)。
 
     values:     [float 毫秒 | None]，最旧在前。
     scale:      映射到画布顶部的值（>0）。
-    color_fn:   color_fn(value) -> 顶格 rgb（按该样本延迟值取色）。
+    color_fn:   color_fn(value) -> rgb（按该样本延迟值取色）。
     miss_color: 缺失样本整列的 rgb。
-    stem_color: 柱身浅灰 rgb。
     """
     cols = canvas.width_chars
     pxh = canvas.px_h
@@ -65,16 +64,11 @@ def plot_series(canvas, values, scale, color_fn, miss_color, stem_color):
         cx = offset + i
         x_left, x_right = cx * 2, cx * 2 + 1
         if v is None:
-            for yy in range(pxh):
-                canvas.set(x_left, yy, miss_color)
-                canvas.set(x_right, yy, miss_color)
-            continue
-        frac = 0.0 if scale <= 0 else min(1.0, v / scale)
-        top = (pxh - 1) - round(frac * (pxh - 1))
-        for yy in range(top, pxh):          # 浅灰柱身：柱顶到基线
-            canvas.set(x_left, yy, stem_color)
-            canvas.set(x_right, yy, stem_color)
-        col = color_fn(v)                    # 顶格上色：柱顶所在字符格内的点
-        for yy in range(top, (top // 4) * 4 + 4):
+            top, col = 0, miss_color            # 超时：整列
+        else:
+            frac = 0.0 if scale <= 0 else min(1.0, v / scale)
+            top = (pxh - 1) - round(frac * (pxh - 1))
+            col = color_fn(v)                   # 整列单色 = 该样本延迟档色
+        for yy in range(top, pxh):              # 从柱顶填到基线
             canvas.set(x_left, yy, col)
             canvas.set(x_right, yy, col)
