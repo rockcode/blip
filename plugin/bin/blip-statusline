@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# blip 状态栏入口：运行插件内捆绑的 blip.pyz(零依赖单文件，需 Python 3.11+)。
+# 解析自身所在目录 -> 上一级即插件根 -> 跑根下的 blip.pyz。
+# 透传参数：通常是要监控的目标名，如  blip-statusline anthropic
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+exec python3 "$DIR/blip.pyz" --statusline "$@"

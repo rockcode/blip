@@ -2,6 +2,14 @@
 
 版本遵循[语义化版本](https://semver.org/lang/zh-CN/)。查看版本：`python3 blip.py --version`。
 
+## v1.2.0 — 2026-06-15
+
+- 支持从 Claude Code **插件市场**安装：`/plugin marketplace add rockcode/blip` → `/plugin install blip-hud@blip`
+- 插件**自包含**：捆绑 `blip.pyz` + `bin/blip-statusline` 入口，装上即用，无需 clone 仓库或手填路径（机器需 Python 3.11+）
+- `/blip-hud` 安装命令改为指向插件内捆绑入口（经 `${CLAUDE_PLUGIN_ROOT}` 解析），并在检测到已有状态栏时询问替换 / 叠加
+- 新增根 `.claude-plugin/marketplace.json`；`release.sh` 发版时同步重建 `plugin/blip.pyz`
+- README 增加插件市场安装说明（中英）
+
 ## v1.1.1 — 2026-06-15
 
 - 新增 MIT 开源协议（`LICENSE`、README 许可章节 + 徽章、`plugin.json` license 字段）

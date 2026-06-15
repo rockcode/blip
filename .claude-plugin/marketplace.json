@@ -1,0 +1,14 @@
+{
+  "name": "blip",
+  "owner": {
+    "name": "rockcode"
+  },
+  "description": "blip —— 终端 / Claude Code 状态栏的大模型 API 延迟监控",
+  "plugins": [
+    {
+      "name": "blip-hud",
+      "source": "./plugin",
+      "description": "把 blip 网络延迟监控做成 Claude Code 状态栏的一行 HUD（自带 blip.pyz，零额外依赖，需 Python 3.11+）"
+    }
+  ]
+}

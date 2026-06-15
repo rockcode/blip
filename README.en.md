@@ -101,7 +101,24 @@ stuck:
 How it works: `blip --daemon` samples once a second in the background and writes
 `~/.cache/blip/state.json`; `blip --statusline` (invoked by the status line)
 reads and renders one line in milliseconds and auto-spawns the daemon if needed.
-The daemon self-exits once Claude Code is closed. Install (swap in your path):
+The daemon self-exits once Claude Code is closed.
+
+### Install from the plugin marketplace (recommended)
+
+```text
+/plugin marketplace add rockcode/blip
+/plugin install blip-hud@blip
+/blip-hud          # auto-configures the status line (writes settings.json)
+```
+
+The plugin **bundles `blip.pyz`**, so it works on install — no repo clone, no
+hand-typed paths (the machine just needs Python 3.11+). `/blip-hud` writes the
+`statusLine` into your `~/.claude/settings.json`; if you already have a status
+line (e.g. another HUD plugin) it asks whether to replace or stack.
+
+### Manual setup
+
+Prefer not to use the plugin? Add this to `~/.claude/settings.json` (swap in your path):
 
 ```json
 "statusLine": {
@@ -111,14 +128,12 @@ The daemon self-exits once Claude Code is closed. Install (swap in your path):
 }
 ```
 
-Add it to `~/.claude/settings.json`; change the trailing `anthropic` to any
-target. (Claude Code plugins can't register a status line directly, so this one
-line is manual — or use the bundled `blip-hud` plugin command to write it.)
-
-> **Don't omit `refreshInterval`**: without it the status line only refreshes on
-> events (after a reply, a mode switch, …) and the mini-waveform won't advance on
-> its own. `2` = refresh every 2s (pairs with the 1s sampling); use `1` for a
-> snappier tick.
+Change the trailing `anthropic` to any target. **Don't omit `refreshInterval`** —
+without it the status line only refreshes on events (a reply, a mode switch, …)
+and the mini-waveform won't advance on its own; `2` = every 2s (pairs with the 1s
+sampling), use `1` for a snappier tick. (Claude Code plugins can't register a
+status line directly, so either way this line ends up in the user's
+`settings.json`.)
 
 ## Traffic (macOS)
 

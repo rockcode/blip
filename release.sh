@@ -24,6 +24,7 @@ build_pyz() {
     rm -rf build_pyz
     chmod +x "$PYZ"
     "./$PYZ" --version >/dev/null || err "构建出的 $PYZ 无法运行"
+    cp "$PYZ" plugin/blip.pyz       # 同步插件内捆绑的单文件(随仓库提交)
 }
 
 cd "$(dirname "$0")"
@@ -63,7 +64,7 @@ if ! build_pyz; then
 fi
 
 # 提交 + tag + 推送 + 发布(blip.pyz 作为 Release 附件，供人直接下载运行)
-git add "$INIT"
+git add "$INIT" plugin/blip.pyz
 git commit -q -m "chore: release v$VERSION"
 git push -q origin main
 git tag -a "v$VERSION" -m "blip v$VERSION"
