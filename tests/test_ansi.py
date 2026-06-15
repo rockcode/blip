@@ -1,6 +1,6 @@
 import unittest
 
-import ansi
+from blipmon import ansi
 
 
 class TestAnsi(unittest.TestCase):

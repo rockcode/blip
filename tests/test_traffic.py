@@ -1,7 +1,7 @@
 import unittest
 
-import traffic
-from config import Target
+from blipmon import traffic
+from blipmon.config import Target
 
 
 SAMPLE = """\

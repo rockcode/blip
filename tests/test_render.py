@@ -1,9 +1,9 @@
 import re
 import unittest
 
-import render
-from buffer import SampleBuffer
-from config import Thresholds, Target
+from blipmon import render
+from blipmon.buffer import SampleBuffer
+from blipmon.config import Thresholds, Target
 
 _ANSI = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
 

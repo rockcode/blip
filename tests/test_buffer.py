@@ -1,6 +1,6 @@
 import unittest
 
-from buffer import SampleBuffer
+from blipmon.buffer import SampleBuffer
 
 
 class TestSampleBuffer(unittest.TestCase):

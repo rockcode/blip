@@ -7,12 +7,12 @@ import termios
 import time
 import tty
 
-import ansi
-import render
-import traffic
-from buffer import SampleBuffer
-from config import load_config
-from probe import measure
+from . import ansi
+from . import render
+from . import traffic
+from .buffer import SampleBuffer
+from .config import load_config
+from .probe import measure
 
 
 async def sample_tick(targets, buffers, timeout, mode):

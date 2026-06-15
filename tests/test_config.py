@@ -3,7 +3,7 @@ import tempfile
 import tomllib
 import unittest
 
-import config
+from blipmon import config
 
 
 class TestParseConfig(unittest.TestCase):

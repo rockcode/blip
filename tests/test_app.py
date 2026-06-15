@@ -2,9 +2,9 @@ import asyncio
 import io
 import unittest
 
-import app
-from buffer import SampleBuffer
-from config import Config, Target
+from blipmon import app
+from blipmon.buffer import SampleBuffer
+from blipmon.config import Config, Target
 
 
 class TestHandleKey(unittest.TestCase):

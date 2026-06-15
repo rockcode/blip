@@ -1,6 +1,6 @@
 """把 Braille 延迟面板组合成整屏一帧。"""
-import ansi
-import braille
+from . import ansi
+from . import braille
 
 
 def color_for(latency, thresholds):

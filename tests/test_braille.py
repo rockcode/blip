@@ -1,6 +1,6 @@
 import unittest
 
-import braille
+from blipmon import braille
 
 
 class TestCanvas(unittest.TestCase):

@@ -2,7 +2,7 @@ import asyncio
 import unittest
 from unittest import mock
 
-import probe
+from blipmon import probe
 
 
 class TestProbe(unittest.IsolatedAsyncioTestCase):
