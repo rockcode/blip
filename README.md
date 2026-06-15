@@ -58,6 +58,18 @@ api.anthropic.com          42ms   avg 48   max 120   loss 0%
 
 对每个 `host:443` 异步测量延迟（默认 TLS 握手，见上表），不需要 API key、不产生计费调用、不受 ICMP 屏蔽影响；采样写入环形缓冲，每个目标用一块 Braille 画布画成向左滚动的波形。
 
+## 流量监控（macOS）
+
+检测到 macOS 的 `nettop` 时**自动启用**，表头追加本机到该 API 的实时上/下行速率：
+
+```
+anthropic   42ms  avg 48  max 120  loss 0%   ↓1.2M/s ↑45K/s
+```
+
+原理：在 TUN + fake-IP 代理下，每个域名分到一个**独占假 IP**；把域名解析成假 IP，再用 `nettop`（免 sudo）按远端 IP 逐连接统计收发字节、差分得速率。流量约每 5~6 秒刷新一次（nettop 自身较慢，在线程里跑、不阻塞延迟波形）。
+
+**仅在 fake-IP 环境下准确**：裸网/真实 CDN 共享 IP 下无法按域名区分流量；非 macOS / 无 nettop 时该功能自动隐藏。
+
 ## 测试
 
     python3 -m unittest discover -s tests -v
