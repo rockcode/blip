@@ -72,3 +72,39 @@ def spawn_daemon():
         daemon_command(),
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         stdin=subprocess.DEVNULL, start_new_session=True)
+
+
+async def _run_loop(config, state_path, heartbeat_path, idle_timeout,
+                    stop=None, sampler=None):
+    """每 interval 采样一次写状态文件；每轮检查是否该空闲自退。
+
+    sampler 可注入以便测试（默认用 app.sample_tick 真实探测）。
+    """
+    sampler = sampler or sample_tick
+    buffers = {t.name: SampleBuffer(60) for t in config.targets}
+    while stop is None or not stop.is_set():
+        await sampler(config.targets, buffers, config.timeout, config.mode)
+        state = {
+            "ts": time.time(),
+            "targets": {t.name: buffers[t.name].values()
+                        for t in config.targets},
+        }
+        hud.write_state(state_path, state)
+        if should_exit(heartbeat_path, idle_timeout):
+            return
+        await asyncio.sleep(config.interval)
+
+
+def daemon_main(config, idle_timeout=300.0):
+    """取锁后跑采样循环（阻塞，供 `blip --daemon` 调用）。已有守护进程则直接退出。"""
+    if not acquire_lock(hud.lock_path()):
+        return 0
+    try:
+        asyncio.run(_run_loop(config, hud.state_path(),
+                              hud.heartbeat_path(), idle_timeout))
+    finally:
+        try:
+            os.remove(hud.lock_path())
+        except OSError:
+            pass
+    return 0

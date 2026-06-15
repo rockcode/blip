@@ -54,5 +54,29 @@ class TestDaemonCommand(unittest.TestCase):
             ["/py", "/x/blip.pyz", "--daemon"])
 
 
+from blipmon import hud as _hud
+from blipmon.config import Config, Target
+
+
+class TestRunLoop(unittest.IsolatedAsyncioTestCase):
+    async def test_writes_state_then_exits_when_idle(self):
+        tmp = tempfile.mkdtemp()
+        state_p = os.path.join(tmp, "state.json")
+        hb = os.path.join(tmp, "heartbeat")   # 不创建 -> should_exit 立即为真
+        cfg = Config(interval=0.0, timeout=0.1, mode="tcp",
+                     targets=[Target("a", "h"), Target("b", "h")])
+
+        async def fake_sampler(targets, buffers, timeout, mode):
+            for t in targets:
+                buffers[t.name].add(123.0)
+
+        await daemon._run_loop(cfg, state_p, hb, idle_timeout=300,
+                               sampler=fake_sampler)
+        st = _hud.read_state(state_p)
+        self.assertEqual(st["targets"]["a"], [123.0])
+        self.assertEqual(st["targets"]["b"], [123.0])
+        self.assertIn("ts", st)
+
+
 if __name__ == "__main__":
     unittest.main()
