@@ -11,8 +11,6 @@
 
 ![blip status-line HUD: the ⟨blip⟩ line showing live latency to anthropic](assets/screenshot-statusline.png)
 
-*The bottom `⟨blip⟩ anthropic … 289ms` line is blip, living in the Claude Code status line.*
-
 ## Why
 
 The worst part of using AI isn't slowness — it's **not being able to tell where it's stuck**: a reply hangs, and is the model still generating or did the connection die ages ago? Keep waiting or retry? blip paints the latency to each API as a live "oscilloscope" in your status line, so a glance rules out (or pins down) "is it the network?"
@@ -55,6 +53,10 @@ Without the plugin, add this to `~/.claude/settings.json`:
 Run it in a terminal to watch several APIs side by side as full-screen scrolling waveforms, with live up/down throughput per header (macOS):
 
 ![blip: four LLM APIs side by side, latency waveforms + live up/down rates in the headers](assets/screenshot-overview.png)
+
+![Working in Claude Code with blip pinned to the bottom of the terminal, watching the network](assets/screenshot-inline.png)
+
+![Whole-screen workflow: collaborating with AI on one side, blip watching every API on the other](assets/screenshot-split.png)
 
 Grab the single file `blip.pyz` from [Releases](https://github.com/rockcode/blip/releases), or use the source (both need Python 3.11+):
 

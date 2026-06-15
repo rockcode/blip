@@ -11,8 +11,6 @@
 
 ![blip 状态栏 HUD：⟨blip⟩ 一行实时显示到 anthropic 的延迟](assets/screenshot-statusline.png)
 
-*底部 `⟨blip⟩ anthropic … 289ms` 那行就是 blip，常驻 Claude Code 状态栏。*
-
 ## 由来
 
 用 AI 时最难受的不是慢，而是**说不清卡在哪**——回答迟迟不出，是模型还在生成、还是网络早就卡死？该等还是该重来？blip 把到各家 API 的延迟实时画成「电波图」常驻状态栏，扫一眼就先排除「是不是网络的锅」。
@@ -55,6 +53,10 @@
 直接在终端跑，多个 API 延迟并排成全屏滚动「电波图」，表头带实时上/下行速率（macOS）：
 
 ![blip：四家大模型 API 并排，延迟波形 + 表头实时上/下行速率](assets/screenshot-overview.png)
+
+![用 Claude Code 干活时，blip 钉在终端底部实时盯着网络](assets/screenshot-inline.png)
+
+![整屏工作流：一边与 AI 协作，一边让 blip 监控各家 API](assets/screenshot-split.png)
 
 到 [Releases](https://github.com/rockcode/blip/releases) 下单文件 `blip.pyz` 即跑，或用源码（均需 Python 3.11+）：
 
