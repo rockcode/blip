@@ -125,7 +125,34 @@ def select_targets(targets, name):
     return [t for t in targets if t.name.lower() == name.lower()]
 
 
-_KNOWN_FLAGS = ("-c", "--config", "-h", "--help", "-V", "--version")
+def _touch(path):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "a"):
+        os.utime(path, None)
+
+
+def run_statusline(config, now=None):
+    """打印一行 HUD：读状态→渲染→写心跳→必要时拉起 daemon。绝不抛错。"""
+    from . import daemon, hud
+    target = config.targets[0].name if config.targets else "?"
+    try:
+        state = hud.read_state(hud.state_path())
+        line = hud.render_line(state, target, config.thresholds,
+                               config.scale_max, now=now)
+    except Exception:
+        line = "⟨blip⟩ —"
+    print(line)
+    try:
+        _touch(hud.heartbeat_path())
+        if not daemon.daemon_running():
+            daemon.spawn_daemon()
+    except Exception:
+        pass
+    return 0
+
+
+_KNOWN_FLAGS = ("-c", "--config", "-h", "--help", "-V", "--version",
+                "--daemon", "--statusline")
 
 
 def _preprocess_argv(argv):
@@ -155,6 +182,10 @@ def main(argv=None):
     parser.add_argument("-c", "--config", help="配置文件路径")
     parser.add_argument("-V", "--version", action="version",
                         version=f"blip {__version__}")
+    parser.add_argument("--daemon", action="store_true",
+                        help="后台采样守护进程(供状态栏 HUD 使用)")
+    parser.add_argument("--statusline", action="store_true",
+                        help="打印一行 HUD(供 Claude Code 状态栏调用)")
     parser.add_argument("target", nargs="?",
                         help="只监控该名称的单个目标(也可写作 -名称)")
     args = parser.parse_args(_preprocess_argv(argv))
@@ -164,6 +195,10 @@ def main(argv=None):
         print("配置中没有 targets，请在配置文件中添加。", file=sys.stderr)
         return 1
 
+    if args.daemon:                      # 后台进程：采样全部目标
+        from . import daemon
+        return daemon.daemon_main(config)
+
     if args.target:
         selected = select_targets(config.targets, args.target)
         if not selected:
@@ -172,6 +207,9 @@ def main(argv=None):
                   file=sys.stderr)
             return 1
         config.targets = selected
+
+    if args.statusline:                  # 一行 HUD：显示 config.targets[0]
+        return run_statusline(config)
 
     fd = sys.stdin.fileno()
     is_tty = sys.stdin.isatty()

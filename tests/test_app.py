@@ -1,5 +1,8 @@
 import asyncio
+import contextlib
 import io
+import os
+import tempfile
 import unittest
 
 from blipmon import app
@@ -116,6 +119,14 @@ class TestPreprocessArgv(unittest.TestCase):
         self.assertEqual(app._preprocess_argv(["--version"]), ["--version"])
         self.assertEqual(app._preprocess_argv(["-V"]), ["-V"])
 
+    def test_daemon_flag_preserved(self):
+        self.assertEqual(app._preprocess_argv(["--daemon"]), ["--daemon"])
+
+    def test_statusline_flag_and_target_preserved(self):
+        self.assertEqual(
+            app._preprocess_argv(["--statusline", "anthropic"]),
+            ["--statusline", "anthropic"])
+
 
 class TestVersion(unittest.TestCase):
     def test_version_is_semver(self):
@@ -139,6 +150,35 @@ class TestTrafficLoop(unittest.IsolatedAsyncioTestCase):
         await asyncio.wait_for(
             app.traffic_loop(FakeMonitor(), stop, pause=0.0), timeout=2.0)
         self.assertGreaterEqual(len(calls), 3)
+
+
+class TestRunStatusline(unittest.TestCase):
+    def test_prints_one_line_without_spawning(self):
+        from blipmon.config import Config, Target, Thresholds
+        tmp = tempfile.mkdtemp()
+        old = os.environ.get("XDG_CACHE_HOME")
+        os.environ["XDG_CACHE_HOME"] = tmp
+        try:
+            from blipmon import hud, daemon
+            # 预置状态文件 + 存活锁(当前 pid)，使 run_statusline 不去 spawn
+            hud.write_state(hud.state_path(),
+                            {"ts": 10 ** 12, "targets": {"anthropic": [42.0]}})
+            with open(hud.lock_path(), "w") as f:
+                f.write(str(os.getpid()))
+            cfg = Config(targets=[Target("anthropic", "h")],
+                         thresholds=Thresholds())
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                rc = app.run_statusline(cfg, now=10 ** 12)
+            out = buf.getvalue()
+            self.assertEqual(rc, 0)
+            self.assertEqual(out.count("\n"), 1)      # 恰好一行
+            self.assertIn("anthropic", out)
+        finally:
+            if old is None:
+                del os.environ["XDG_CACHE_HOME"]
+            else:
+                os.environ["XDG_CACHE_HOME"] = old
 
 
 if __name__ == "__main__":
