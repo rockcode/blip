@@ -84,6 +84,31 @@ Colors (four tiers, brighter = faster): `<bright` bright green, `<green` green, 
 
 For each `host:443` it measures latency asynchronously (TLS handshake by default, see the table) — no API key, no billable calls, unaffected by ICMP blocking. Samples go into a ring buffer, and each target is drawn on its own Braille canvas as a waveform scrolling to the left.
 
+## Claude Code status-line HUD
+
+Squeeze blip into a single-line, single-target mini-waveform in the Claude Code
+status line — a glance tells you whether the model is thinking or the network is
+stuck:
+
+    ⟨blip⟩ anthropic ▁▂▃▅▇▆▅ 48ms
+
+How it works: `blip --daemon` samples once a second in the background and writes
+`~/.cache/blip/state.json`; `blip --statusline` (invoked by the status line)
+reads and renders one line in milliseconds and auto-spawns the daemon if needed.
+The daemon self-exits once Claude Code is closed. Install (swap in your path):
+
+```json
+"statusLine": {
+  "type": "command",
+  "command": "python3 \"/path/to/blip.py\" --statusline anthropic",
+  "refreshInterval": 2
+}
+```
+
+Add it to `~/.claude/settings.json`; change the trailing `anthropic` to any
+target. (Claude Code plugins can't register a status line directly, so this one
+line is manual — or use the bundled `blip-hud` plugin command to write it.)
+
 ## Traffic (macOS)
 
 When macOS `nettop` is detected, blip **auto-enables** a real-time up/down throughput readout from your machine to each API, appended to the header:

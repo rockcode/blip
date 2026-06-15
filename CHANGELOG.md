@@ -2,6 +2,12 @@
 
 版本遵循[语义化版本](https://semver.org/lang/zh-CN/)。查看版本：`python3 blip.py --version`。
 
+## v1.1.0 — 2026-06-15
+
+- 新增 Claude Code 状态栏 HUD：一行单目标延迟迷你波形（`blip --statusline`）
+- 新增后台采样守护进程 `blip --daemon`：写 `~/.cache/blip/state.json`，单例锁、空闲自退、由状态栏脚本自动拉起
+- 随附 `blip-hud` 插件壳（含半自动写入 `settings.json` 的安装命令）
+
 ## v1.0.0 — 2026-06-15
 
 首个发布版本。
