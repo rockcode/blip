@@ -4,10 +4,11 @@ import io
 import os
 import tempfile
 import unittest
+from unittest import mock
 
 from blipmon import app
 from blipmon.buffer import SampleBuffer
-from blipmon.config import Config, Target
+from blipmon.config import Config, Target, Thresholds
 
 
 class TestHandleKey(unittest.TestCase):
@@ -153,13 +154,22 @@ class TestTrafficLoop(unittest.IsolatedAsyncioTestCase):
 
 
 class TestRunStatusline(unittest.TestCase):
-    def test_prints_one_line_without_spawning(self):
-        from blipmon.config import Config, Target, Thresholds
+    def _with_cache(self, fn):
+        """在隔离的临时 XDG_CACHE_HOME 下执行 fn()，结束后恢复。"""
         tmp = tempfile.mkdtemp()
         old = os.environ.get("XDG_CACHE_HOME")
         os.environ["XDG_CACHE_HOME"] = tmp
         try:
-            from blipmon import hud, daemon
+            return fn()
+        finally:
+            if old is None:
+                del os.environ["XDG_CACHE_HOME"]
+            else:
+                os.environ["XDG_CACHE_HOME"] = old
+
+    def test_prints_one_line_without_spawning(self):
+        def body():
+            from blipmon import hud
             # 预置状态文件 + 存活锁(当前 pid)，使 run_statusline 不去 spawn
             hud.write_state(hud.state_path(),
                             {"ts": 10 ** 12, "targets": {"anthropic": [42.0]}})
@@ -174,11 +184,24 @@ class TestRunStatusline(unittest.TestCase):
             self.assertEqual(rc, 0)
             self.assertEqual(out.count("\n"), 1)      # 恰好一行
             self.assertIn("anthropic", out)
-        finally:
-            if old is None:
-                del os.environ["XDG_CACHE_HOME"]
-            else:
-                os.environ["XDG_CACHE_HOME"] = old
+        self._with_cache(body)
+
+    def test_no_state_prints_starting_and_spawns(self):
+        # 无状态文件、无锁：仍打印一行(启动中)、返回0、并尝试拉起 daemon
+        def body():
+            cfg = Config(targets=[Target("anthropic", "h")],
+                         thresholds=Thresholds())
+            buf = io.StringIO()
+            with mock.patch("blipmon.daemon.spawn_daemon") as spawn:
+                with contextlib.redirect_stdout(buf):
+                    rc = app.run_statusline(cfg)
+            out = buf.getvalue()
+            self.assertEqual(rc, 0)
+            self.assertEqual(out.count("\n"), 1)      # 恰好一行
+            self.assertIn("anthropic", out)
+            self.assertIn("启动中", out)
+            spawn.assert_called_once()                # 无守护进程时拉起
+        self._with_cache(body)
 
 
 if __name__ == "__main__":

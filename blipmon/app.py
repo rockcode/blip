@@ -126,7 +126,9 @@ def select_targets(targets, name):
 
 
 def _touch(path):
-    os.makedirs(os.path.dirname(path), exist_ok=True)
+    dirpath = os.path.dirname(path)
+    if dirpath:                       # 裸文件名时 dirname 为 ""，makedirs 会报错
+        os.makedirs(dirpath, exist_ok=True)
     with open(path, "a"):
         os.utime(path, None)
 
