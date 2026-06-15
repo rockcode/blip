@@ -7,42 +7,38 @@
 [![最新版本](https://img.shields.io/github/v/release/rockcode/blip?color=2ea44f&label=release)](https://github.com/rockcode/blip/releases/latest)
 [![许可证](https://img.shields.io/badge/license-MIT-2ea44f)](LICENSE)
 
-**blip 是一个 Claude Code 插件**——把本机到各大模型 API 的实时网络延迟，做成一行常驻 **Claude Code 状态栏**的迷你「电波图」：用 AI 时余光一扫，就知道是模型在慢慢想、还是网络卡死。它也能脱离 Claude Code，作为**独立的终端全屏监控**运行。默认 TLS 握手测量，纯 Python 标准库，零依赖。
+**Claude Code 插件**：把本机到各大模型 API 的延迟，做成一行常驻状态栏的迷你「电波图」——一眼看清是模型在想、还是网络卡死。也能作为独立终端监控运行。纯 Python 标准库，零依赖。
 
 ![blip 状态栏 HUD：⟨blip⟩ 一行实时显示到 anthropic 的延迟](assets/screenshot-statusline.png)
 
-*底部 `⟨blip⟩ anthropic … 289ms`（黄色）那一行就是 blip，常驻在 Claude Code 状态栏（此处叠在 claude-hud 下方）。*
+*底部 `⟨blip⟩ anthropic … 289ms` 那行就是 blip，常驻 Claude Code 状态栏。*
 
 ## 由来
 
-用 AI 时最难受的，其实不是慢，而是**说不清到底卡在哪**：一个回答迟迟不出来，你根本分不清——是大模型还在埋头生成、网络其实通畅，还是连接早就卡死、白等半天？是它在慢慢想，还是网已经断了？该继续等，还是赶紧重来？这种「无法准确感知 AI 是否还在工作、网络是否通畅，是模型响应慢还是网络卡死」的抓瞎感，才是写这个工具最原始的出发点。
-
-于是有了它：把本机到各家大模型 API 的延迟实时画成滚动的「电波图」，常驻在 Claude Code 状态栏或终端角落。网络通不通、响应稳不稳、有没有丢包，扫一眼就有数——至少能先把「是不是网络的锅」这件事看清楚，不用再干等着猜。
+用 AI 时最难受的不是慢，而是**说不清卡在哪**——回答迟迟不出，是模型还在生成、还是网络早就卡死？该等还是该重来？blip 把到各家 API 的延迟实时画成「电波图」常驻状态栏，扫一眼就先排除「是不是网络的锅」。
 
 ## Claude Code 状态栏 HUD
 
-主推用法：一行单目标迷你波形，常驻 Claude Code 状态栏：
+一行单目标迷你波形，常驻状态栏：
 
     ⟨blip⟩ anthropic ▁▂▃▅▇▆▅ 48ms
 
-原理：`blip --daemon` 在后台每秒采样写 `~/.cache/blip/state.json`，`blip --statusline` 被状态栏调用时毫秒级读取并渲染一行、必要时自动拉起守护进程；守护进程在 Claude Code 关闭后空闲自退。
+后台 `blip --daemon` 每秒采样写状态文件，`blip --statusline` 被状态栏调用时读取渲染、按需自动拉起守护进程，Claude Code 关闭后空闲自退。
 
 ### 从插件市场安装（推荐）
-
-在 Claude Code 里依次输入这四条斜杠命令：
 
 ```text
 /plugin marketplace add rockcode/blip   # 1. 添加市场
 /plugin install blip-hud@blip           # 2. 安装插件
-/reload-plugins                         # 3. 重载使其生效
-/blip-hud                               # 4. 接好状态栏(半自动写 settings.json)
+/reload-plugins                         # 3. 重载生效
+/blip-hud                               # 4. 接好状态栏
 ```
 
-插件**自带 `blip.pyz`**，装上即用——无需 clone 仓库、不用手填路径（机器需有 Python 3.11+）。第 4 步的 `/blip-hud` 会把 `statusLine` 写进你的 `~/.claude/settings.json`；若你已有别的状态栏（如另一个 HUD 插件），它会先问你替换还是叠加。装好后重开 / 刷新 Claude Code 即可看到 `⟨blip⟩ <目标名> …`。
+插件自带 `blip.pyz`，装上即用（机器需 Python 3.11+）。`/blip-hud` 把 `statusLine` 写进 `~/.claude/settings.json`；已有状态栏会先问替换还是叠加。
 
 ### 手动配置
 
-不想用插件，也可以手动把下面这段加进 `~/.claude/settings.json`（把绝对路径换成你的）：
+不用插件，手动加进 `~/.claude/settings.json`：
 
 ```json
 "statusLine": {
@@ -52,59 +48,31 @@
 }
 ```
 
-末尾的 `anthropic` 换成任意目标名。**`refreshInterval` 别省**——没有它，状态栏只在「有回复 / 切模式」等事件后刷新一次、迷你图不会自己往前走；`2` = 每 2 秒刷一次（与每秒采样配合），想更跟手可设 `1`。（Claude Code 插件无法直接注册状态栏，所以无论哪种方式，这一行最终都要落在用户的 `settings.json` 里。）
+**`refreshInterval` 别省**——没有它状态栏只在事件后刷新、迷你图不会自动走（设 `1` 更跟手）。
 
 ## 独立运行：终端全屏监控
 
-不接 Claude Code 也行——直接在终端跑，把多个大模型 API 的延迟并排画成全屏滚动的「电波图」，表头还能实时显示上/下行速率（macOS）：
+直接在终端跑，多个 API 延迟并排成全屏滚动「电波图」，表头带实时上/下行速率（macOS）：
 
 ![blip：四家大模型 API 并排，延迟波形 + 表头实时上/下行速率](assets/screenshot-overview.png)
 
-*四家 API 并排：彩色延迟波形（绿 / 黄 / 红四档）、丢包率，以及表头实时上/下行速率（图中 anthropic 正 ↑390K/s 上传）。*
+到 [Releases](https://github.com/rockcode/blip/releases) 下单文件 `blip.pyz` 即跑，或用源码（均需 Python 3.11+）：
 
-### 下载即用
+    ./blip.pyz                 # 监控全部目标
+    ./blip.pyz anthropic       # 只看单个目标
+    python3 blip.py            # 从源码跑
 
-到 [Releases](https://github.com/rockcode/blip/releases) 下载**单文件** `blip.pyz`，即下即跑——它把整个工具压成一个文件，零第三方依赖：
-
-    chmod +x blip.pyz          # 加可执行位(仅首次)
-    ./blip.pyz                 # 直接运行，监控全部目标
-    ./blip.pyz anthropic       # 只监控单个目标
-    python3 blip.pyz           # 或显式用解释器
-
-需要机器上有 Python 3.11+（macOS / Linux 等任意装了 Python 的系统皆可）。
-
-### 从源码运行
-
-    python3 blip.py            # 用默认/已有配置(监控全部目标)
-    python3 blip.py -c my.toml # 指定配置文件
-    python3 blip.py anthropic  # 只监控名为 anthropic 的单个目标(也可写 -anthropic)
-
-首次运行会在 `~/.config/blip/config.toml` 生成默认配置（含 Anthropic / OpenAI / Google / DeepSeek）。需要 Python 3.11+（依赖标准库 `tomllib`）；无任何第三方依赖。
-
-### 操作
-
-- `q` 或 `Ctrl-C` 退出
-- `p` 暂停 / 继续
-
-### 使用情景
-
-blip 占地很小，也可以钉在终端的一角或底部——用 AI 时余光一扫，就知道是模型在慢慢想、还是网络已经卡死。
-
-![用 Claude Code 干活时，blip 钉在终端底部实时盯着网络](assets/screenshot-inline.png)
-
-![整屏工作流：一边与 AI 协作，一边让 blip 监控各家 API](assets/screenshot-split.png)
+首次运行生成 `~/.config/blip/config.toml`（预置 Anthropic / OpenAI / Google / DeepSeek）。`q` 退出、`p` 暂停。
 
 ### 流量监控（macOS）
 
-检测到 macOS 的 `nettop` 时**自动启用**，表头追加本机到该 API 的实时上/下行速率：
+检测到 `nettop` 时自动在表头加实时上/下行速率：
 
 ```
 anthropic   42ms  avg 48  max 120  loss 0%   ↓1.2M/s ↑45K/s
 ```
 
-原理：在 TUN + fake-IP 代理下，每个域名分到一个**独占假 IP**；把域名解析成假 IP，再用 `nettop`（免 sudo）按远端 IP 逐连接统计收发字节、差分得速率。流量约每 5~6 秒刷新一次（nettop 自身较慢，在线程里跑、不阻塞延迟波形）。
-
-**仅在 fake-IP 环境下准确**：裸网/真实 CDN 共享 IP 下无法按域名区分流量；非 macOS / 无 nettop 时该功能自动隐藏。
+TUN + fake-IP 下每个域名分到独占假 IP，用 `nettop`（免 sudo）按 IP 逐连接差分得速率。**仅 fake-IP 环境准确**；非 macOS / 无 nettop 自动隐藏。
 
 ## 配置
 
@@ -113,31 +81,29 @@ anthropic   42ms  avg 48  max 120  loss 0%   ↓1.2M/s ↑45K/s
     interval  = 1.0         # 采样间隔(秒)
     timeout   = 2.0         # 建连超时(秒)
     mode      = "tls"       # 测量方式: tcp / tls / http
-    scale_max = 800         # 纵轴固定上限(ms)，所有面板统一以便横向对比
+    scale_max = 800         # 纵轴固定上限(ms)，便于横向对比
 
-    [thresholds]
-    bright = 100            # ms 以下: 亮绿(极佳)
-    green  = 200            # ms 以下: 绿
-    yellow = 400            # ms 以下: 黄, 以上: 红
+    [thresholds]            # <100 亮绿  <200 绿  <400 黄  >=400 红
+    bright = 100
+    green  = 200
+    yellow = 400
 
     [[targets]]
     name = "anthropic"
     host = "api.anthropic.com"
     port = 443
 
-颜色（四档，越快越亮）：`<bright` 亮绿、`<green` 绿、`<yellow` 黄、`>=yellow` 红；超时/失败显示红色满格尖刺并计入 loss。
+超时/失败显示红色满格尖刺并计入 loss。
 
 ## 测量方式（mode）
 
 | mode | 含义 | 适用 |
 |------|------|------|
-| `tcp` | TCP 建连耗时 | 局域网/无代理；**注意：TUN 模式 VPN 会就地应答握手，使该值严重偏低失真** |
-| `tls` | TCP+TLS 握手耗时（默认） | 真实网络 RTT，不需 key、不刷请求、TUN 代理下不失真 |
-| `http` | HTTPS 首字节耗时（发 HEAD） | 最贴近真实体验（含服务端处理），开销稍高 |
+| `tcp` | TCP 建连耗时 | 局域网/无代理；**TUN VPN 就地应答握手致失真** |
+| `tls` | TCP+TLS 握手（默认） | 真实 RTT，免 key、不刷请求、TUN 下不失真 |
+| `http` | HTTPS 首字节（HEAD） | 最贴近真实体验，开销稍高 |
 
-## 工作原理
-
-对每个 `host:443` 异步测量延迟（默认 TLS 握手，见上表），不需要 API key、不产生计费调用、不受 ICMP 屏蔽影响；采样写入环形缓冲，每个目标用一块 Braille 画布画成向左滚动的波形。
+测量不需 API key、不产生计费调用、不受 ICMP 屏蔽影响。
 
 ## 测试
 
