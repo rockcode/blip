@@ -24,16 +24,22 @@ def _pid_alive(pid):
 
 
 def acquire_lock(path, alive=_pid_alive):
-    """取得单例锁。已有存活进程持锁则返回 False，否则写入本进程 pid 返回 True。"""
+    """取得单例锁。无锁时原子独占创建(赢得冷启动竞争)；锁属存活进程则让步；
+    锁主已死或锁损坏则抢占。返回是否取得。"""
     os.makedirs(os.path.dirname(path), exist_ok=True)
     try:
+        with open(path, "x") as f:        # O_EXCL：原子独占创建，两进程只一个能赢
+            f.write(str(os.getpid()))
+        return True
+    except FileExistsError:
+        pass
+    try:                                   # 锁已存在：持有者还活着就让步
         with open(path) as f:
-            old = int(f.read().strip())
-        if alive(old):
-            return False
+            if alive(int(f.read().strip())):
+                return False
     except (OSError, ValueError):
         pass
-    with open(path, "w") as f:
+    with open(path, "w") as f:             # 锁主已死/锁损坏：抢占
         f.write(str(os.getpid()))
     return True
 

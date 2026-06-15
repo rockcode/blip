@@ -90,6 +90,13 @@ class TestRenderLine(unittest.TestCase):
         self.assertIn("stale", line)
         self.assertIn(hud.ansi.fg(hud.ansi.DIM), line)
 
+    def test_none_last_sample_shows_double_dash(self):
+        # 最新一拍超时(None)：尾部显示 --ms(红)，非过期分支
+        st = self._state(1000, [10.0, None])
+        line = hud.render_line(st, "anthropic", Thresholds(), 800, now=1001)
+        self.assertIn("--ms", line)
+        self.assertNotIn("stale", line)
+
 
 if __name__ == "__main__":
     unittest.main()
