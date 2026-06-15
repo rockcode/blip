@@ -9,8 +9,22 @@ set -euo pipefail
 
 VERSION="${1:-}"
 INIT="blipmon/__init__.py"
+PYZ="blip.pyz"
 
 err() { echo "错误: $*" >&2; exit 1; }
+
+# 把 blipmon 包打成单文件 blip.pyz(零依赖、跨平台，需对方装 Python 3.11+)
+build_pyz() {
+    rm -rf build_pyz "$PYZ"
+    mkdir build_pyz
+    cp -R blipmon build_pyz/
+    find build_pyz -name __pycache__ -type d -exec rm -rf {} +
+    python3 -m zipapp build_pyz -m "blipmon.app:main" \
+        -p "/usr/bin/env python3" -o "$PYZ"
+    rm -rf build_pyz
+    chmod +x "$PYZ"
+    "./$PYZ" --version >/dev/null || err "构建出的 $PYZ 无法运行"
+}
 
 cd "$(dirname "$0")"
 
@@ -41,12 +55,20 @@ if ! python3 -m unittest discover -s tests >/dev/null 2>&1; then
     err "测试未通过，已撤销版本号改动并中止发布"
 fi
 
-# 提交 + tag + 推送 + 发布
+# 构建单文件产物(失败则撤销版本号改动并中止)
+echo "== 构建 $PYZ =="
+if ! build_pyz; then
+    git checkout -- "$INIT"
+    err "构建 $PYZ 失败，已撤销版本号改动并中止发布"
+fi
+
+# 提交 + tag + 推送 + 发布(blip.pyz 作为 Release 附件，供人直接下载运行)
 git add "$INIT"
 git commit -q -m "chore: release v$VERSION"
 git push -q origin main
 git tag -a "v$VERSION" -m "blip v$VERSION"
 git push -q origin "v$VERSION"
-gh release create "v$VERSION" --title "blip v$VERSION" --notes "$NOTES"
+gh release create "v$VERSION" --title "blip v$VERSION" --notes "$NOTES" "$PYZ"
+rm -f "$PYZ"
 
-echo "✅ 已发布 blip v$VERSION"
+echo "✅ 已发布 blip v$VERSION（含单文件 $PYZ 附件）"

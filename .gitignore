@@ -3,3 +3,5 @@ __pycache__/
 .venv/
 config.toml
 docs/superpowers/
+blip.pyz
+build_pyz/

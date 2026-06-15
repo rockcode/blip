@@ -22,7 +22,18 @@ blip takes up almost no space — park it in a corner or along the bottom of you
 
 ![Whole-screen workflow: collaborating with AI on one side, blip watching every API on the other](assets/screenshot-split.png)
 
-## Run
+## Download & run
+
+Grab the **single file** `blip.pyz` from [Releases](https://github.com/rockcode/blip/releases) and run it as-is — it bundles the whole tool into one file with zero third-party dependencies:
+
+    chmod +x blip.pyz          # make it executable (first time only)
+    ./blip.pyz                 # run it; watches all targets
+    ./blip.pyz anthropic       # watch a single target
+    python3 blip.pyz           # or invoke the interpreter explicitly
+
+Needs Python 3.11+ on the machine (any system with Python — macOS / Linux / …). Usage is identical to "Run from source" below.
+
+## Run from source
 
     python3 blip.py            # default / existing config (all targets)
     python3 blip.py -c my.toml # use a specific config file
