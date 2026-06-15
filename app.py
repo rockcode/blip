@@ -9,6 +9,7 @@ import tty
 
 import ansi
 import render
+import traffic
 from buffer import SampleBuffer
 from config import load_config
 from probe import measure
@@ -30,12 +31,12 @@ def _term_size():
         return 80, 24
 
 
-def _draw(config, buffers, state, out):
+def _draw(config, buffers, state, out, rates=None):
     cols, rows = _term_size()
     lines = render.render_frame(config.targets, buffers,
                                 config.thresholds, cols, rows,
                                 paused=state["paused"],
-                                scale_max=config.scale_max)
+                                scale_max=config.scale_max, rates=rates)
     frame = ansi.HOME + "\r\n".join(
         line + ansi.CLEAR_LINE for line in lines) + ansi.CLEAR_BELOW
     out.write(frame)
@@ -49,7 +50,22 @@ def _handle_key(ch, state, stop):
         state["paused"] = not state["paused"]
 
 
-async def tick_loop(config, buffers, state, out, stop):
+async def traffic_loop(monitor, stop, pause=1.0):
+    """周期更新流量速率。nettop 慢(~5s)但在线程里跑、不阻塞延迟波形；
+    每次 update 后短暂停顿再继续，故流量约 5~6 秒刷新一次。"""
+    while not stop.is_set():
+        try:
+            await monitor.update(time.monotonic())
+        except Exception:
+            pass
+        if pause > 0:
+            try:
+                await asyncio.wait_for(stop.wait(), timeout=pause)
+            except asyncio.TimeoutError:
+                pass
+
+
+async def tick_loop(config, buffers, state, out, stop, monitor=None):
     """主循环：每 interval 一拍。同拍并发采样所有目标后统一渲染一帧。
 
     所有目标在同一拍采样、各缓冲区锁步增长，因此各单元时间轴对齐——同一列
@@ -61,7 +77,7 @@ async def tick_loop(config, buffers, state, out, stop):
         if not state["paused"]:
             await sample_tick(config.targets, buffers,
                               config.timeout, config.mode)
-        _draw(config, buffers, state, out)
+        _draw(config, buffers, state, out, monitor.rates if monitor else None)
         remaining = config.interval - (time.monotonic() - started)
         if remaining > 0:
             try:                       # 可被 stop 提前唤醒，按 q 即时退出
@@ -75,6 +91,8 @@ async def run(config, out=None):
     buffers = {t.name: SampleBuffer(2000) for t in config.targets}
     state = {"paused": False}
     stop = asyncio.Event()
+    monitor = traffic.TrafficMonitor(config.targets) \
+        if traffic.available() else None
 
     loop = asyncio.get_running_loop()
 
@@ -86,11 +104,17 @@ async def run(config, out=None):
     have_reader = sys.stdin.isatty()
     if have_reader:
         loop.add_reader(sys.stdin.fileno(), on_stdin)
+    extra = []
+    if monitor is not None:
+        extra.append(asyncio.create_task(traffic_loop(monitor, stop)))
     try:
-        await tick_loop(config, buffers, state, out, stop)
+        await tick_loop(config, buffers, state, out, stop, monitor)
     finally:
         if have_reader:
             loop.remove_reader(sys.stdin.fileno())
+        for t in extra:
+            t.cancel()
+        await asyncio.gather(*extra, return_exceptions=True)
 
 
 def select_targets(targets, name):

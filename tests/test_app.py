@@ -113,5 +113,23 @@ class TestPreprocessArgv(unittest.TestCase):
         self.assertEqual(app._preprocess_argv(["-h"]), ["-h"])
 
 
+class TestTrafficLoop(unittest.IsolatedAsyncioTestCase):
+    async def test_drives_update_repeatedly(self):
+        stop = asyncio.Event()
+        calls = []
+
+        class FakeMonitor:
+            rates = {}
+
+            async def update(self, now):
+                calls.append(now)
+                if len(calls) >= 3:
+                    stop.set()
+
+        await asyncio.wait_for(
+            app.traffic_loop(FakeMonitor(), stop, pause=0.0), timeout=2.0)
+        self.assertGreaterEqual(len(calls), 3)
+
+
 if __name__ == "__main__":
     unittest.main()
