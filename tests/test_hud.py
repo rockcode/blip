@@ -1,3 +1,5 @@
+import os
+import tempfile
 import unittest
 
 from blipmon import hud
@@ -32,6 +34,25 @@ class TestSparkline(unittest.TestCase):
 
     def test_empty_is_empty(self):
         self.assertEqual(hud.sparkline([], 800, Thresholds()), "")
+
+
+class TestStateIO(unittest.TestCase):
+    def test_roundtrip(self):
+        d = tempfile.mkdtemp()
+        p = os.path.join(d, "sub", "state.json")
+        state = {"ts": 123.0, "targets": {"anthropic": [10.0, None, 20.0]}}
+        hud.write_state(p, state)
+        self.assertEqual(hud.read_state(p), state)
+
+    def test_missing_returns_none(self):
+        self.assertIsNone(hud.read_state("/no/such/state.json"))
+
+    def test_corrupt_returns_none(self):
+        d = tempfile.mkdtemp()
+        p = os.path.join(d, "state.json")
+        with open(p, "w") as f:
+            f.write("{not json")
+        self.assertIsNone(hud.read_state(p))
 
 
 if __name__ == "__main__":

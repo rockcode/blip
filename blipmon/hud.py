@@ -45,3 +45,21 @@ def sparkline(values, scale_max, thresholds):
     return "".join(
         ansi.colorize(block_for(v, scale_max), color_for(v, thresholds))
         for v in values)
+
+
+def write_state(path, state):
+    """原子写：先写临时文件再 os.replace，避免读到半截 JSON。"""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(state, f)
+    os.replace(tmp, path)
+
+
+def read_state(path):
+    """读状态；文件缺失或损坏一律返回 None（渲染端据此显示启动中/兜底）。"""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return None
