@@ -2,6 +2,9 @@
 
 [中文](README.md) · **English**
 
+[![Download blip.pyz](https://img.shields.io/badge/download-blip.pyz-2ea44f?logo=python&logoColor=white)](https://github.com/rockcode/blip/releases/latest/download/blip.pyz)
+[![Latest release](https://img.shields.io/github/v/release/rockcode/blip?color=2ea44f&label=release)](https://github.com/rockcode/blip/releases/latest)
+
 A network-latency "oscilloscope" for your terminal — watch the connection latency from your machine to multiple LLM APIs render as live Braille waveforms (TLS handshake by default; TCP connect / HTTP first-byte optional), with real-time up/down throughput in each header (macOS). Pure Python standard library, zero dependencies.
 
 ![blip: four LLM APIs side by side, latency waveforms + live up/down rates in the headers](assets/screenshot-overview.png)
