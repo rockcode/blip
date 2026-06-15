@@ -68,6 +68,12 @@ class TestRenderLine(unittest.TestCase):
         st = self._state(1000, [10.0])  # 只有 anthropic
         line = hud.render_line(st, "openai", Thresholds(), 800, now=1000)
         self.assertIn("启动中", line)
+        self.assertIn("openai", line)   # 启动中也回显目标名
+
+    def test_empty_series_shows_starting(self):
+        st = self._state(1000, [])      # 已登记但还没样本
+        line = hud.render_line(st, "anthropic", Thresholds(), 800, now=1000)
+        self.assertIn("启动中", line)
 
     def test_fresh_has_color_and_ms(self):
         st = self._state(1000, [10.0, 20.0, 30.0])

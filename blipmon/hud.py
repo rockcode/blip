@@ -82,8 +82,10 @@ def render_line(state, target_name, thresholds, scale_max,
         return f"{label} {target_name} …启动中"
 
     series = targets[target_name][-samples:]
+    if not series:                    # 已登记但还没样本(刚启动)：同样显示启动中
+        return f"{label} {target_name} …启动中"
     ts = (state or {}).get("ts", 0)
-    last = series[-1] if series else None
+    last = series[-1]
     last_txt = "--" if last is None else f"{last:.0f}"
 
     if now - ts > stale_after:
