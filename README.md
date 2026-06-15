@@ -1,5 +1,7 @@
 # blip
 
+**中文** · [English](README.en.md)
+
 终端里的 API 延迟「电波图」——用 Braille 示波器波形实时监控本机到多个大模型 API 的连接延迟（默认 TLS 握手，可选 TCP 建连 / HTTP 首字节），并在表头实时显示上/下行速率（macOS）。纯 Python 标准库，零依赖。
 
 ![blip：四家大模型 API 并排，延迟波形 + 表头实时上/下行速率](assets/screenshot-overview.png)
