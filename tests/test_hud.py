@@ -55,5 +55,35 @@ class TestStateIO(unittest.TestCase):
         self.assertIsNone(hud.read_state(p))
 
 
+class TestRenderLine(unittest.TestCase):
+    def _state(self, ts, series):
+        return {"ts": ts, "targets": {"anthropic": series}}
+
+    def test_no_state_shows_starting(self):
+        line = hud.render_line(None, "anthropic", Thresholds(), 800, now=1000)
+        self.assertIn("anthropic", line)
+        self.assertIn("启动中", line)
+
+    def test_target_absent_shows_starting(self):
+        st = self._state(1000, [10.0])  # 只有 anthropic
+        line = hud.render_line(st, "openai", Thresholds(), 800, now=1000)
+        self.assertIn("启动中", line)
+
+    def test_fresh_has_color_and_ms(self):
+        st = self._state(1000, [10.0, 20.0, 30.0])
+        line = hud.render_line(st, "anthropic", Thresholds(), 800, now=1001)
+        self.assertIn("anthropic", line)
+        self.assertIn("30ms", line)         # 最新值
+        self.assertIn("\x1b[38;2;", line)   # 含真彩色
+        self.assertNotIn("stale", line)
+
+    def test_stale_is_dimmed_and_marked(self):
+        st = self._state(1000, [10.0, 20.0])
+        # now 远晚于 ts -> 过期
+        line = hud.render_line(st, "anthropic", Thresholds(), 800, now=9999)
+        self.assertIn("stale", line)
+        self.assertIn(hud.ansi.fg(hud.ansi.DIM), line)
+
+
 if __name__ == "__main__":
     unittest.main()

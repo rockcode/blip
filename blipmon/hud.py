@@ -65,3 +65,33 @@ def read_state(path):
             return json.load(f)
     except (OSError, ValueError):
         return None
+
+
+def render_line(state, target_name, thresholds, scale_max,
+                now=None, stale_after=STALE_AFTER, samples=HUD_SAMPLES):
+    """组装 HUD 单行（含 ANSI）。state 为 read_state 的返回(可为 None)。
+
+    - 无 state 或无该目标数据 -> "⟨blip⟩ <name> …启动中"
+    - 数据过期(now-ts>stale_after) -> 整行变暗 + ⟨stale⟩ 标记
+    - 正常 -> ⟨blip⟩ <name> <逐字符染色迷你图> <最新>ms
+    """
+    now = time.time() if now is None else now
+    label = ansi.colorize("⟨blip⟩", ansi.GRAY)
+    targets = (state or {}).get("targets", {})
+    if target_name not in targets:
+        return f"{label} {target_name} …启动中"
+
+    series = targets[target_name][-samples:]
+    ts = (state or {}).get("ts", 0)
+    last = series[-1] if series else None
+    last_txt = "--" if last is None else f"{last:.0f}"
+
+    if now - ts > stale_after:
+        plain_spark = "".join(block_for(v, scale_max) for v in series)
+        plain = f"⟨blip⟩ {target_name} {plain_spark} {last_txt}ms ⟨stale⟩"
+        return ansi.colorize(plain, ansi.DIM)
+
+    spark = sparkline(series, scale_max, thresholds)
+    last_col = color_for(last, thresholds)
+    return (f"{label} {target_name} {spark} "
+            f"{ansi.colorize(last_txt + 'ms', last_col)}")
