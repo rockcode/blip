@@ -4,6 +4,7 @@
 
 [![Download blip.pyz](https://img.shields.io/badge/download-blip.pyz-2ea44f?logo=python&logoColor=white)](https://github.com/rockcode/blip/releases/latest/download/blip.pyz)
 [![Latest release](https://img.shields.io/github/v/release/rockcode/blip?color=2ea44f&label=release)](https://github.com/rockcode/blip/releases/latest)
+[![license](https://img.shields.io/github/license/rockcode/blip?color=2ea44f)](LICENSE)
 
 A network-latency "oscilloscope" for your terminal — watch the connection latency from your machine to multiple LLM APIs render as live Braille waveforms (TLS handshake by default; TCP connect / HTTP first-byte optional), with real-time up/down throughput in each header (macOS). Pure Python standard library, zero dependencies.
 
@@ -109,6 +110,11 @@ Add it to `~/.claude/settings.json`; change the trailing `anthropic` to any
 target. (Claude Code plugins can't register a status line directly, so this one
 line is manual — or use the bundled `blip-hud` plugin command to write it.)
 
+> **Don't omit `refreshInterval`**: without it the status line only refreshes on
+> events (after a reply, a mode switch, …) and the mini-waveform won't advance on
+> its own. `2` = refresh every 2s (pairs with the 1s sampling); use `1` for a
+> snappier tick.
+
 ## Traffic (macOS)
 
 When macOS `nettop` is detected, blip **auto-enables** a real-time up/down throughput readout from your machine to each API, appended to the header:
@@ -124,3 +130,7 @@ How: under a TUN + fake-IP proxy every domain gets its **own dedicated fake IP**
 ## Tests
 
     python3 -m unittest discover -s tests -v
+
+## License
+
+[MIT](LICENSE) © 2026 rockcode
