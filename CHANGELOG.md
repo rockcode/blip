@@ -2,6 +2,13 @@
 
 版本遵循[语义化版本](https://semver.org/lang/zh-CN/)。查看版本：`python3 blip.py --version`。
 
+## v1.1.1 — 2026-06-15
+
+- 新增 MIT 开源协议（`LICENSE`、README 许可章节 + 徽章、`plugin.json` license 字段）
+- README 增加状态栏 HUD 实际使用截图
+- HUD 文档补充 `refreshInterval` 提醒：不设它状态栏只在事件后刷新、迷你图不会自动走
+- 修复 `release.sh`：CJK 标点紧贴 `$VERSION` 在某些 locale 下导致变量名解析错误
+
 ## v1.1.0 — 2026-06-15
 
 - 新增 Claude Code 状态栏 HUD：一行单目标延迟迷你波形（`blip --statusline`）

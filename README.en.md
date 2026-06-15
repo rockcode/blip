@@ -93,6 +93,10 @@ stuck:
 
     ⟨blip⟩ anthropic ▁▂▃▅▇▆▅ 48ms
 
+![blip status-line HUD: the ⟨blip⟩ line stacked under the status line, showing live latency to anthropic](assets/screenshot-statusline.png)
+
+*In practice: the bottom `⟨blip⟩ anthropic … 289ms` (yellow) line is blip, stacked beneath your existing status line (coexisting with claude-hud here).*
+
 How it works: `blip --daemon` samples once a second in the background and writes
 `~/.cache/blip/state.json`; `blip --statusline` (invoked by the status line)
 reads and renders one line in milliseconds and auto-spawns the daemon if needed.
