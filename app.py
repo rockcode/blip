@@ -93,16 +93,58 @@ async def run(config, out=None):
             loop.remove_reader(sys.stdin.fileno())
 
 
+def select_targets(targets, name):
+    """name 为空返回全部；否则只返回名称匹配(忽略大小写)的目标。"""
+    if not name:
+        return targets
+    return [t for t in targets if t.name.lower() == name.lower()]
+
+
+_KNOWN_FLAGS = ("-c", "--config", "-h", "--help")
+
+
+def _preprocess_argv(argv):
+    """把 -<名称> 简写(如 -anthropic)转成位置参数，便于 argparse 解析；
+    保留 -c/--config 及其值、-h/--help 原样。"""
+    out = []
+    i = 0
+    while i < len(argv):
+        a = argv[i]
+        if a in ("-c", "--config"):
+            out.append(a)
+            if i + 1 < len(argv):
+                i += 1
+                out.append(argv[i])
+        elif a not in _KNOWN_FLAGS and a.startswith("-") and len(a) > 1:
+            out.append(a.lstrip("-"))      # -anthropic -> anthropic
+        else:
+            out.append(a)
+        i += 1
+    return out
+
+
 def main(argv=None):
+    argv = sys.argv[1:] if argv is None else argv
     parser = argparse.ArgumentParser(
         prog="blip", description="终端 API 延迟电波图")
     parser.add_argument("-c", "--config", help="配置文件路径")
-    args = parser.parse_args(argv)
+    parser.add_argument("target", nargs="?",
+                        help="只监控该名称的单个目标(也可写作 -名称)")
+    args = parser.parse_args(_preprocess_argv(argv))
 
     config = load_config(args.config)
     if not config.targets:
         print("配置中没有 targets，请在配置文件中添加。", file=sys.stderr)
         return 1
+
+    if args.target:
+        selected = select_targets(config.targets, args.target)
+        if not selected:
+            names = ", ".join(t.name for t in config.targets)
+            print(f"找不到名为 '{args.target}' 的目标，可选: {names}",
+                  file=sys.stderr)
+            return 1
+        config.targets = selected
 
     fd = sys.stdin.fileno()
     is_tty = sys.stdin.isatty()

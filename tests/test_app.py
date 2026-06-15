@@ -84,5 +84,34 @@ class TestTickLoop(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(buffers["a"].values(), [])   # 暂停不采样
 
 
+class TestTargetSelection(unittest.TestCase):
+    def test_none_returns_all(self):
+        ts = [Target("a", "h"), Target("b", "h")]
+        self.assertEqual(app.select_targets(ts, None), ts)
+
+    def test_by_name_case_insensitive(self):
+        ts = [Target("anthropic", "h"), Target("openai", "h")]
+        sel = app.select_targets(ts, "Anthropic")
+        self.assertEqual([t.name for t in sel], ["anthropic"])
+
+    def test_no_match_returns_empty(self):
+        self.assertEqual(app.select_targets([Target("a", "h")], "zzz"), [])
+
+
+class TestPreprocessArgv(unittest.TestCase):
+    def test_dash_name_becomes_positional(self):
+        self.assertEqual(app._preprocess_argv(["-anthropic"]), ["anthropic"])
+
+    def test_plain_positional_unchanged(self):
+        self.assertEqual(app._preprocess_argv(["anthropic"]), ["anthropic"])
+
+    def test_config_flag_and_value_preserved(self):
+        self.assertEqual(app._preprocess_argv(["-c", "x.toml", "-openai"]),
+                         ["-c", "x.toml", "openai"])
+
+    def test_help_flag_preserved(self):
+        self.assertEqual(app._preprocess_argv(["-h"]), ["-h"])
+
+
 if __name__ == "__main__":
     unittest.main()
