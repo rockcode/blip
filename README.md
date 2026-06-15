@@ -12,8 +12,9 @@ api.anthropic.com          42ms   avg 48   max 120   loss 0%
 
 ## 运行
 
-    python3 blip.py            # 用默认/已有配置
+    python3 blip.py            # 用默认/已有配置(监控全部目标)
     python3 blip.py -c my.toml # 指定配置文件
+    python3 blip.py anthropic  # 只监控名为 anthropic 的单个目标(也可写 -anthropic)
 
 首次运行会在 `~/.config/blip/config.toml` 生成默认配置（含 Anthropic / OpenAI / Google / DeepSeek）。
 
