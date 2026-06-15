@@ -3,6 +3,8 @@ import tempfile
 import unittest
 
 from blipmon import daemon
+from blipmon import hud as _hud
+from blipmon.config import Config, Target
 
 
 class TestLock(unittest.TestCase):
@@ -52,10 +54,6 @@ class TestDaemonCommand(unittest.TestCase):
         self.assertEqual(
             daemon.daemon_command(program="/x/blip.pyz", executable="/py"),
             ["/py", "/x/blip.pyz", "--daemon"])
-
-
-from blipmon import hud as _hud
-from blipmon.config import Config, Target
 
 
 class TestRunLoop(unittest.IsolatedAsyncioTestCase):
