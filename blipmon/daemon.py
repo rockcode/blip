@@ -81,6 +81,7 @@ async def _run_loop(config, state_path, heartbeat_path, idle_timeout,
     sampler 可注入以便测试（默认用 app.sample_tick 真实探测）。
     """
     sampler = sampler or sample_tick
+    # 每目标留 60 个样本(约 60s 历史)；HUD 只读末 7 个，多出的备趋势/容错
     buffers = {t.name: SampleBuffer(60) for t in config.targets}
     while stop is None or not stop.is_set():
         await sampler(config.targets, buffers, config.timeout, config.mode)
@@ -97,14 +98,15 @@ async def _run_loop(config, state_path, heartbeat_path, idle_timeout,
 
 def daemon_main(config, idle_timeout=300.0):
     """取锁后跑采样循环（阻塞，供 `blip --daemon` 调用）。已有守护进程则直接退出。"""
-    if not acquire_lock(hud.lock_path()):
+    lock = hud.lock_path()             # 取一次，确保 finally 删的就是取的那把锁
+    if not acquire_lock(lock):
         return 0
     try:
         asyncio.run(_run_loop(config, hud.state_path(),
                               hud.heartbeat_path(), idle_timeout))
     finally:
         try:
-            os.remove(hud.lock_path())
+            os.remove(lock)
         except OSError:
             pass
     return 0

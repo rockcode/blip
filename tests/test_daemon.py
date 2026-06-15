@@ -1,10 +1,27 @@
+import errno
 import os
 import tempfile
 import unittest
+from unittest import mock
 
 from blipmon import daemon
 from blipmon import hud as _hud
 from blipmon.config import Config, Target
+
+
+class TestPidAlive(unittest.TestCase):
+    def test_current_process_is_alive(self):
+        self.assertTrue(daemon._pid_alive(os.getpid()))
+
+    def test_eperm_means_alive(self):
+        # 进程存在但属于别的用户 -> 视为存活，不可抢锁
+        with mock.patch("os.kill", side_effect=OSError(errno.EPERM, "denied")):
+            self.assertTrue(daemon._pid_alive(1))
+
+    def test_esrch_means_dead(self):
+        # 进程不存在 -> 可抢锁
+        with mock.patch("os.kill", side_effect=OSError(errno.ESRCH, "no proc")):
+            self.assertFalse(daemon._pid_alive(424242))
 
 
 class TestLock(unittest.TestCase):
