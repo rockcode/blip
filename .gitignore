@@ -5,3 +5,4 @@ config.toml
 docs/superpowers/
 /blip.pyz
 build_pyz/
+release.sh
