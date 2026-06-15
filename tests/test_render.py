@@ -38,6 +38,18 @@ class TestHeader(unittest.TestCase):
         self.assertIn("42ms", h)
         self.assertIn("loss 0%", h)
 
+    def test_header_shows_rate_when_given(self):
+        b = SampleBuffer(10); b.add(42.0)
+        h = strip(render.format_header("x", b.stats(), Thresholds(), 80,
+                                       rate=(4563.0, 4006.0)))
+        self.assertIn("↓4.5K/s", h)
+        self.assertIn("↑3.9K/s", h)
+
+    def test_header_omits_rate_when_none(self):
+        b = SampleBuffer(10); b.add(42.0)
+        h = strip(render.format_header("x", b.stats(), Thresholds(), 80))
+        self.assertNotIn("↓", h)
+
 
 class TestPanel(unittest.TestCase):
     def test_panel_has_exact_height(self):
