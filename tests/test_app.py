@@ -112,6 +112,16 @@ class TestPreprocessArgv(unittest.TestCase):
     def test_help_flag_preserved(self):
         self.assertEqual(app._preprocess_argv(["-h"]), ["-h"])
 
+    def test_version_flag_preserved(self):
+        self.assertEqual(app._preprocess_argv(["--version"]), ["--version"])
+        self.assertEqual(app._preprocess_argv(["-V"]), ["-V"])
+
+
+class TestVersion(unittest.TestCase):
+    def test_version_is_semver(self):
+        from blipmon import __version__
+        self.assertRegex(__version__, r"^\d+\.\d+\.\d+$")
+
 
 class TestTrafficLoop(unittest.IsolatedAsyncioTestCase):
     async def test_drives_update_repeatedly(self):

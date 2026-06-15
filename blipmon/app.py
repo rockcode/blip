@@ -7,6 +7,7 @@ import termios
 import time
 import tty
 
+from . import __version__
 from . import ansi
 from . import render
 from . import traffic
@@ -124,12 +125,12 @@ def select_targets(targets, name):
     return [t for t in targets if t.name.lower() == name.lower()]
 
 
-_KNOWN_FLAGS = ("-c", "--config", "-h", "--help")
+_KNOWN_FLAGS = ("-c", "--config", "-h", "--help", "-V", "--version")
 
 
 def _preprocess_argv(argv):
     """把 -<名称> 简写(如 -anthropic)转成位置参数，便于 argparse 解析；
-    保留 -c/--config 及其值、-h/--help 原样。"""
+    保留 -c/--config 及其值、-h/--help、-V/--version 原样。"""
     out = []
     i = 0
     while i < len(argv):
@@ -152,6 +153,8 @@ def main(argv=None):
     parser = argparse.ArgumentParser(
         prog="blip", description="终端 API 延迟电波图")
     parser.add_argument("-c", "--config", help="配置文件路径")
+    parser.add_argument("-V", "--version", action="version",
+                        version=f"blip {__version__}")
     parser.add_argument("target", nargs="?",
                         help="只监控该名称的单个目标(也可写作 -名称)")
     args = parser.parse_args(_preprocess_argv(argv))
