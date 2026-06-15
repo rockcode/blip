@@ -45,39 +45,36 @@ class Canvas:
 
 
 def plot_series(canvas, values, scale, color_fn, miss_color, stem_color):
-    """把最后 px_w 个样本右对齐画进画布，每个样本占【一个点列】(半个字符宽)，
-    因此一个字符格容纳两次采样、横向分辨率翻倍、柱体更细。
+    """把最后 width_chars 个样本右对齐画进画布，每个样本独占一个字符列。
 
-    每根柱 = 从基线到柱顶的浅灰「下影线」(stem_color) + 柱顶一个按延迟着色的
-    「彩色顶点」(color_fn)。先画所有灰影、再画所有彩色顶点，使顶点在与相邻样本
-    共用的字符格中盖过灰色。缺失样本画整列(miss_color)。
+    每根柱 = 从基线到柱顶的浅灰柱身(stem_color) + 柱顶所在那一个字符格按延迟
+    着色(color_fn)。一个样本独占整列，颜色不依赖相邻样本、不随滚动闪变；着色
+    的最小单位是一个字符格(终端限制)。缺失样本画整列(miss_color)。
 
     values:     [float 毫秒 | None]，最旧在前。
     scale:      映射到画布顶部的值（>0）。
-    color_fn:   color_fn(value) -> 顶点 rgb（按该样本延迟值取色）。
+    color_fn:   color_fn(value) -> 顶格 rgb（按该样本延迟值取色）。
     miss_color: 缺失样本整列的 rgb。
-    stem_color: 下影线(柱体)的浅灰 rgb。
+    stem_color: 柱身浅灰 rgb。
     """
-    pxw = canvas.px_w
+    cols = canvas.width_chars
     pxh = canvas.px_h
-    vis = values[-pxw:] if pxw else []
-    offset = pxw - len(vis)
-
-    def top_y(v):
-        frac = 0.0 if scale <= 0 else min(1.0, v / scale)
-        return (pxh - 1) - round(frac * (pxh - 1))
-
-    for i, v in enumerate(vis):          # 第一遍：浅灰下影线(柱顶下方到基线)
-        if v is None:
-            continue
-        x = offset + i
-        for yy in range(top_y(v) + 1, pxh):
-            canvas.set(x, yy, stem_color)
-
-    for i, v in enumerate(vis):          # 第二遍：彩色顶点 / 超时整列(盖过灰色)
-        x = offset + i
+    vis = values[-cols:] if cols else []
+    offset = cols - len(vis)
+    for i, v in enumerate(vis):
+        cx = offset + i
+        x_left, x_right = cx * 2, cx * 2 + 1
         if v is None:
             for yy in range(pxh):
-                canvas.set(x, yy, miss_color)
+                canvas.set(x_left, yy, miss_color)
+                canvas.set(x_right, yy, miss_color)
             continue
-        canvas.set(x, top_y(v), color_fn(v))
+        frac = 0.0 if scale <= 0 else min(1.0, v / scale)
+        top = (pxh - 1) - round(frac * (pxh - 1))
+        for yy in range(top, pxh):          # 浅灰柱身：柱顶到基线
+            canvas.set(x_left, yy, stem_color)
+            canvas.set(x_right, yy, stem_color)
+        col = color_fn(v)                    # 顶格上色：柱顶所在字符格内的点
+        for yy in range(top, (top // 4) * 4 + 4):
+            canvas.set(x_left, yy, col)
+            canvas.set(x_right, yy, col)
