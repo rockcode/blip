@@ -105,16 +105,20 @@ The daemon self-exits once Claude Code is closed.
 
 ### Install from the plugin marketplace (recommended)
 
+Run these four slash commands in Claude Code, in order:
+
 ```text
-/plugin marketplace add rockcode/blip
-/plugin install blip-hud@blip
-/blip-hud          # auto-configures the status line (writes settings.json)
+/plugin marketplace add rockcode/blip   # 1. add the marketplace
+/plugin install blip-hud@blip           # 2. install the plugin
+/reload-plugins                         # 3. reload to apply
+/blip-hud                               # 4. wire up the status line (writes settings.json)
 ```
 
 The plugin **bundles `blip.pyz`**, so it works on install — no repo clone, no
-hand-typed paths (the machine just needs Python 3.11+). `/blip-hud` writes the
-`statusLine` into your `~/.claude/settings.json`; if you already have a status
-line (e.g. another HUD plugin) it asks whether to replace or stack.
+hand-typed paths (the machine just needs Python 3.11+). Step 4's `/blip-hud`
+writes the `statusLine` into your `~/.claude/settings.json`; if you already have a
+status line (e.g. another HUD plugin) it asks whether to replace or stack. Reopen
+or refresh Claude Code and you'll see `⟨blip⟩ <target> …`.
 
 ### Manual setup
 
