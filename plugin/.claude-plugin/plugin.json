@@ -1,8 +1,10 @@
 {
   "name": "blip-hud",
   "description": "把 blip 网络延迟监控做成 Claude Code 状态栏的一行 HUD",
-  "version": "1.2.0",
-  "author": "rockcode",
+  "version": "1.2.1",
+  "author": {
+    "name": "rockcode"
+  },
   "repository": "https://github.com/rockcode/blip",
   "license": "MIT"
 }

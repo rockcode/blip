@@ -2,6 +2,10 @@
 
 版本遵循[语义化版本](https://semver.org/lang/zh-CN/)。查看版本：`python3 blip.py --version`。
 
+## v1.2.1 — 2026-06-15
+
+- 修复插件 manifest：`plugin.json` 的 `author` 须为对象（`{"name": "rockcode"}`）而非字符串，否则 `/plugin install blip-hud@blip` 会因校验失败而装不上
+
 ## v1.2.0 — 2026-06-15
 
 - 支持从 Claude Code **插件市场**安装：`/plugin marketplace add rockcode/blip` → `/plugin install blip-hud@blip`
