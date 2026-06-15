@@ -18,7 +18,8 @@ class TestBlockFor(unittest.TestCase):
         # 超时/失败 = 满格尖刺（最显眼），沿用全屏版的设计语言
         self.assertEqual(hud.block_for(None, 800), hud.BLOCKS[-1])
 
-    def test_scale_zero_does_not_crash(self):
+    def test_scale_zero_returns_lowest_block(self):
+        # 退化刻度(<=0)防崩溃：任意真实延迟都落到最低格
         self.assertEqual(hud.block_for(100, 0), hud.BLOCKS[0])
 
 
