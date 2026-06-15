@@ -49,7 +49,9 @@ def sparkline(values, scale_max, thresholds):
 
 def write_state(path, state):
     """原子写：先写临时文件再 os.replace，避免读到半截 JSON。"""
-    os.makedirs(os.path.dirname(path), exist_ok=True)
+    dirpath = os.path.dirname(path)
+    if dirpath:                       # 裸文件名时 dirname 为 ""，makedirs 会报错
+        os.makedirs(dirpath, exist_ok=True)
     tmp = path + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(state, f)

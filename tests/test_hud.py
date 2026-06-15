@@ -50,7 +50,7 @@ class TestStateIO(unittest.TestCase):
     def test_corrupt_returns_none(self):
         d = tempfile.mkdtemp()
         p = os.path.join(d, "state.json")
-        with open(p, "w") as f:
+        with open(p, "w", encoding="utf-8") as f:
             f.write("{not json")
         self.assertIsNone(hud.read_state(p))
 
